@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,21 +37,23 @@ class UserController {
         return ResponseEntity.status(CREATED.value()).body(response);
     }
 
+    @GetMapping("/me")
+    ResponseEntity<UserVM> findCurrentUser() {
+        var currentUser = userContextUtils.getCurrentUserOrThrow();
+        var user = userService.getByUsername(currentUser.username());
+        return ResponseEntity.ok(user);
+    }
+
     @GetMapping("/{username}")
     ResponseEntity<UserVM> findUser(@PathVariable String username) {
         var user = userService.getByUsername(username);
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{username}")
+    @PutMapping("/me")
     @SecurityRequirement(name = "Bearer")
-    ResponseEntity<Void> updateUser(@PathVariable String username, @RequestBody @Valid UpdateUserRequest request) {
-        var user = userService.getByUsername(username);
+    ResponseEntity<Void> updateUser(@RequestBody @Valid UpdateUserRequest request) {
         var currentUser = userContextUtils.getCurrentUserOrThrow();
-
-        if (!currentUser.id().equals(user.id())) {
-            throw new AccessDeniedException("You can only update your own profile");
-        }
         var cmd = new UpdateUserCmd(request.fullName());
         userService.updateUser(currentUser.id(), cmd);
         return ResponseEntity.ok().build();

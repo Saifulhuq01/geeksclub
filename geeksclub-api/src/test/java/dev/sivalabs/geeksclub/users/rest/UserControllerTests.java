@@ -104,7 +104,7 @@ class UserControllerTests extends BaseIntegrationTest {
         String token = getUserAuthToken();
 
         MvcTestResult testResult = mvc.put()
-                .uri("/api/users/siva")
+                .uri("/api/users/me")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -124,24 +124,5 @@ class UserControllerTests extends BaseIntegrationTest {
         assertThat(getResult).hasStatusOk().bodyJson().convertTo(UserVM.class).satisfies(user -> {
             assertThat(user.fullName()).isEqualTo("Siva Updated");
         });
-    }
-
-    @Test
-    void shouldNotUpdateOtherUsersProfile() {
-        String token = getUserAuthToken();
-
-        MvcTestResult testResult = mvc.put()
-                .uri("/api/users/admin")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {
-                          "fullName": "Admin Updated",
-                          "username": "admin"
-                        }
-                        """)
-                .exchange();
-
-        assertThat(testResult).hasStatus(HttpStatus.FORBIDDEN);
     }
 }

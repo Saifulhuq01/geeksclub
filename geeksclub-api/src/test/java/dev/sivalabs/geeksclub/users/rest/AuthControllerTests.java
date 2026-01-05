@@ -4,12 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.sivalabs.geeksclub.BaseIntegrationTest;
 import dev.sivalabs.geeksclub.users.rest.dto.LoginResponse;
+import dev.sivalabs.geeksclub.users.rest.dto.RefreshTokenResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
-class LoginControllerTests extends BaseIntegrationTest {
+class AuthControllerTests extends BaseIntegrationTest {
 
     @Test
     @DisplayName("Given valid credentials, user should be able to login successfully")
@@ -33,6 +34,25 @@ class LoginControllerTests extends BaseIntegrationTest {
                     assertThat(response).isNotNull();
                     assertThat(response.fullName()).isEqualTo("Siva Katamreddy");
                     assertThat(response.email()).isEqualTo("siva@gmail.com");
+                    assertThat(response.accessToken()).isNotBlank();
+                    assertThat(response.refreshToken()).isNotBlank();
+                });
+    }
+
+    @Test
+    void shouldRefreshTokenSuccessfully() {
+        String token = getUserAuthToken();
+
+        MvcTestResult testResult = mvc.post()
+                .uri("/api/auth/refresh")
+                .header("Authorization", "Bearer " + token)
+                .exchange();
+
+        assertThat(testResult)
+                .hasStatusOk()
+                .bodyJson()
+                .convertTo(RefreshTokenResponse.class)
+                .satisfies(response -> {
                     assertThat(response.accessToken()).isNotBlank();
                     assertThat(response.refreshToken()).isNotBlank();
                 });

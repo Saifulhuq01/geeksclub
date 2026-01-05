@@ -1,7 +1,9 @@
 package dev.sivalabs.geeksclub.users.domain;
 
+import dev.sivalabs.geeksclub.users.domain.dto.AuthToken;
 import dev.sivalabs.geeksclub.users.domain.dto.LoginCmd;
 import dev.sivalabs.geeksclub.users.domain.dto.LoginResult;
+import dev.sivalabs.geeksclub.users.domain.dto.UserVM;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -46,5 +48,9 @@ public class AuthService {
                 user.username(),
                 user.email(),
                 user.role().name());
+    }
+
+    public AuthToken generateToken(UserVM user) {
+        return tokenProvider.generate(user);
     }
 }

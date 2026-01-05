@@ -73,7 +73,7 @@ All endpoints return JSON responses and use standard HTTP status codes.
       "message": "Password must be at least 8 characters long"
     }
   ],
-  "path": "/api/auth/register"
+  "path": "/api/users"
 }
 ```
 
@@ -135,33 +135,7 @@ All endpoints return JSON responses and use standard HTTP status codes.
 
 ---
 
-### 3. Logout
-
-**Endpoint**: `POST /api/auth/logout`
-
-**Description**: Invalidate the current JWT token.
-
-**Authentication**: Required (Bearer Token)
-
-**Request Headers**:
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-**Success Response** (200 OK):
-```json
-{
-  "message": "Logged out successfully"
-}
-```
-
-**Status Codes**:
-- `200`: Logout successful
-- `401`: Unauthorized (invalid or expired token)
-
----
-
-### 4. Refresh Token
+### 3. Refresh Token
 
 **Endpoint**: `POST /api/auth/refresh`
 
@@ -178,7 +152,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresIn": 3600
+  "accessTokenExpiresAt": 3600,
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshTokenExpiresAt": 86400
 }
 ```
 
