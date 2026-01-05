@@ -1,6 +1,9 @@
 package dev.sivalabs.geeksclub;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
@@ -8,8 +11,15 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record ApplicationProperties(
         @DefaultValue("support@sivalabs.dev") String supportEmail,
         String applicationUrl,
+        @Valid JwtProperties jwt,
         @Valid CorsProperties cors,
         @Valid OpenAPIProperties openApi) {
+
+    public record JwtProperties(
+            @DefaultValue("GeeksClub") String issuer,
+            @DefaultValue("604800") Long expiresInSeconds,
+            @NotNull RSAPublicKey publicKey,
+            @NotNull RSAPrivateKey privateKey) {}
 
     public record CorsProperties(
             @DefaultValue("/api/**") String pathPattern,

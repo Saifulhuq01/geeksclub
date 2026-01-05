@@ -6,6 +6,7 @@ CREATE TABLE votes
     vote_type  VARCHAR(10) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version    INTEGER              DEFAULT 0,
     CONSTRAINT fk_votes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_votes_message FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE,
     CONSTRAINT chk_vote_type CHECK (vote_type IN ('UP', 'DOWN')),

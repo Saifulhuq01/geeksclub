@@ -8,6 +8,7 @@ CREATE TABLE users
     role       VARCHAR(20)  NOT NULL DEFAULT 'USER',
     created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version    INTEGER               DEFAULT 0,
     CONSTRAINT chk_role CHECK (role IN ('USER', 'ADMIN'))
 );
 

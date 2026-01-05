@@ -50,22 +50,22 @@
 
 ### 3. Security Configuration
 
-- [ ] Configure Spring Security
-  - [ ] Add Spring Security dependency
-  - [ ] Create SecurityConfig class
-  - [ ] Disable default security for initial setup
-  - [ ] Plan JWT authentication architecture
-- [ ] Set up JWT authentication infrastructure
-  - [ ] Add oauth2-resource-server library dependency
-  - [ ] Create JWT configuration properties
-  - [ ] Create JwtTokenProvider skeleton class
-- [ ] Create security filter chain
-  - [ ] Define public endpoints (auth, health check)
-  - [ ] Define protected endpoints
-- [ ] Configure CORS
-  - [ ] Set up CORS configuration
-  - [ ] Allow frontend origin (http://localhost:4200)
-  - [ ] Configure allowed methods and headers
+- [x] Configure Spring Security
+  - [x] Add Spring Security dependency
+  - [x] Create SecurityConfig class
+  - [x] Disable default security for initial setup
+  - [x] Plan JWT authentication architecture
+- [x] Set up JWT authentication infrastructure
+  - [x] Add oauth2-resource-server library dependency
+  - [x] Create JWT configuration properties
+  - [x] Create JwtTokenProvider skeleton class
+- [x] Create security filter chain
+  - [x] Define public endpoints (auth, health check)
+  - [x] Define protected endpoints
+- [x] Configure CORS
+  - [x] Set up CORS configuration
+  - [x] Allow frontend origin (http://localhost:4200)
+  - [x] Configure allowed methods and headers
 
 ### 4. Kafka Setup
 

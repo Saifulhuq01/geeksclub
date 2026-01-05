@@ -8,6 +8,7 @@ CREATE TABLE messages
     status          VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED',
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version         INTEGER              DEFAULT 0,
     CONSTRAINT fk_messages_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT chk_status CHECK (status IN ('PUBLISHED', 'FLAGGED', 'REMOVED')),
     CONSTRAINT chk_content_length CHECK (LENGTH(content) > 0 AND LENGTH(content) <= 5000)
