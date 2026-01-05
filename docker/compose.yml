@@ -21,3 +21,14 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+
+  geeksclub-angular:
+    image: sivaprasadreddy/geeksclub-angular
+    container_name: geeksclub-angular
+    environment:
+      API_BASE_URL: http://localhost:8080
+    ports:
+      - "4200:4200"
+    depends_on:
+      - geeksclub-api
+    restart: unless-stopped

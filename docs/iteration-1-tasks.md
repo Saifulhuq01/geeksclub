@@ -1,10 +1,7 @@
 # GeeksClub - Iteration 0 Tasks
 
 **Iteration**: Project Setup (Iteration 0)
-**Duration**: 3-4 days
 **Goal**: Set up the project foundation, development environment, and CI/CD pipeline.
-
----
 
 ## Backend Tasks
 
@@ -86,23 +83,7 @@
   - [x] Create topics with appropriate partitions and replication
   - [x] Add topic creation beans
 
-### 5. Spring AI Setup
-
-- [ ] Add Spring AI dependencies
-  - [ ] Add Spring AI core dependency
-  - [ ] Add Spring AI OpenAI dependency (or chosen provider)
-  - [ ] Check compatibility with Spring Boot version
-- [ ] Configure AI model connection
-  - [ ] Set up API key configuration (environment variable)
-  - [ ] Configure AI model settings in application.properties
-  - [ ] Add properties for model name, temperature, etc.
-- [ ] Create basic spam detection service skeleton
-  - [ ] Create SpamDetectionService interface
-  - [ ] Create SpamDetectionServiceImpl with @Async
-  - [ ] Add placeholder spam detection logic
-  - [ ] Configure async executor
-
-### 6. Testing Infrastructure
+### 5. Testing Infrastructure
 
 - [x] Configure Testcontainers for integration tests
   - [x] Add Testcontainers dependency
@@ -119,271 +100,77 @@
   - [x] Configure test logging levels
   - [x] Set up test-specific properties
 
----
-
 ## Frontend Tasks
 
 ### 1. Angular Project Setup
 
-- [ ] Create new Angular project with latest version
-  - [ ] Install Node.js and npm (verify versions)
-  - [ ] Install Angular CLI globally
-  - [ ] Generate new Angular project (`ng new geeksclub-ui`)
-  - [ ] Choose routing: Yes
-  - [ ] Choose stylesheet format: CSS/SCSS
-- [ ] Set up project structure
-  - [ ] Create core module for singleton services
-  - [ ] Create shared module for reusable components
-  - [ ] Create feature modules structure
-  - [ ] Set up folder structure (components, services, models, guards, interceptors)
-- [ ] Configure Tailwind CSS
-  - [ ] Install Tailwind CSS and dependencies
-  - [ ] Initialize Tailwind config
-  - [ ] Configure tailwind.config.js
-  - [ ] Add Tailwind directives to styles.css
-  - [ ] Test Tailwind classes
+- [x] Create new Angular project with latest version
+  - [x] Install Node.js and npm (verify versions)
+  - [x] Install Angular CLI globally
+  - [x] Generate new Angular project (`ng new geeksclub-ui`)
+  - [x] Choose routing: Yes
+  - [x] Choose stylesheet format: CSS/SCSS
+- [x] Set up project structure
+  - [x] Set up folder structure (components, services, models, guards, interceptors)
+- [x] Configure Tailwind CSS
+  - [x] Install Tailwind CSS and dependencies
+  - [x] Initialize Tailwind config
+  - [x] Configure tailwind.config.js
+  - [x] Add Tailwind directives to styles.css
+  - [x] Test Tailwind classes
 
 ### 2. Development Environment
 
-- [ ] Configure environment files
-  - [ ] Set up environment.ts with API URL
-  - [ ] Set up environment.prod.ts with production API URL
-  - [ ] Add environment-specific configurations
-  - [ ] Document environment variables
-- [ ] Set up proxy configuration for API calls
-  - [ ] Create proxy.conf.json
-  - [ ] Configure proxy to backend (http://localhost:8080)
-  - [ ] Update angular.json with proxy config
-  - [ ] Test proxy configuration
-- [ ] Configure TypeScript strict mode
-  - [ ] Enable strict mode in tsconfig.json
-  - [ ] Enable strictNullChecks
-  - [ ] Enable strictFunctionTypes
-  - [ ] Fix any resulting type errors
-- [ ] Set up ESLint and Prettier
-  - [ ] Install ESLint and Angular ESLint
-  - [ ] Create .eslintrc.json configuration
-  - [ ] Install Prettier
-  - [ ] Create .prettierrc configuration
-  - [ ] Add format and lint scripts to package.json
-  - [ ] Configure VS Code settings (optional)
+- [x] Configure environment files
+  - [x] Set up environment.ts with API URL
+  - [x] Set up environment.prod.ts with production API URL
+  - [x] Add environment-specific configurations
+  - [x] Document environment variables
 
-### 3. Core Services
-
-- [ ] Create HTTP interceptor for JWT tokens
-  - [ ] Generate AuthInterceptor
-  - [ ] Add logic to attach JWT token to requests
-  - [ ] Exclude auth endpoints from token attachment
-  - [ ] Register interceptor in providers
-- [ ] Create error handling service
-  - [ ] Generate ErrorHandlerService
-  - [ ] Create error handling logic
-  - [ ] Add error logging
-  - [ ] Create user-friendly error messages
-- [ ] Create notification/toast service
-  - [ ] Generate NotificationService
-  - [ ] Choose notification library (or use PrimeNG Toast)
-  - [ ] Create success/error/info/warning methods
-  - [ ] Add notification component to app component
-- [ ] Create loading indicator service
-  - [ ] Generate LoadingService
-  - [ ] Create loading state management
-  - [ ] Create loading indicator component
-  - [ ] Add loading indicator to app component
-
-### 4. Routing Setup
-
-- [ ] Configure Angular Router
-  - [ ] Set up app-routing.module.ts
-  - [ ] Configure router imports
-  - [ ] Add <router-outlet> to app component
-- [ ] Create routing module
-  - [ ] Define initial routes (home, login, register)
-  - [ ] Set up lazy loading for feature modules
-  - [ ] Configure route preloading strategy
-- [ ] Set up route guards skeleton
-  - [ ] Generate AuthGuard skeleton
-  - [ ] Generate AdminGuard skeleton
-  - [ ] Add guard interfaces
-  - [ ] Plan guard implementation for next iteration
-
----
+- [x] Configure Angular Router
+  - [x] Configure router imports
+  - [x] Add <router-outlet> to app component
+- [x] Create routing config
+  - [x] Define initial routes (home, login, register)
+  - [x] Set up lazy loading for feature modules
 
 ## DevOps Tasks
 
 ### 1. Docker Configuration
 
-- [ ] Create Dockerfile for backend
-  - [ ] Create multi-stage Dockerfile
-  - [ ] Add Maven build stage
-  - [ ] Add runtime stage with JRE
-  - [ ] Configure EXPOSE port
-  - [ ] Add HEALTHCHECK instruction
-  - [ ] Test Docker build
-- [ ] Create Dockerfile for frontend
-  - [ ] Create multi-stage Dockerfile
-  - [ ] Add Node build stage
-  - [ ] Add nginx runtime stage
-  - [ ] Configure nginx.conf
-  - [ ] Test Docker build
-- [ ] Create docker-compose.yml for local development
-  - [ ] Add backend service
-  - [ ] Add frontend service
-  - [ ] Add PostgreSQL service
-  - [ ] Add Kafka service
-  - [ ] Add depends_on relationships
-- [ ] Set up Docker networks and volumes
-  - [ ] Create custom network for services
-  - [ ] Create volume for PostgreSQL data
-  - [ ] Create volume for Kafka data
-  - [ ] Test docker-compose up
+- [x] Dockerize backend using Buildpacks support
+- [x] Create Dockerfile for frontend
+  - [x] Create multi-stage Dockerfile
+  - [x] Add Node build stage
+  - [x] Add nginx runtime stage
+  - [x] Configure nginx.conf
+  - [x] Test Docker build
+- [x] Create docker-compose.yml for local development
+  - [x] Add backend service
+  - [x] Add frontend service
+  - [x] Add PostgreSQL service
+  - [x] Add Kafka service
 
 ### 2. CI/CD Pipeline
 
-- [ ] Set up GitHub Actions / GitLab CI
-  - [ ] Create .github/workflows directory
-  - [ ] Choose CI platform (GitHub Actions recommended)
-  - [ ] Set up repository secrets
-- [ ] Configure build pipeline
-  - [ ] Create workflow YAML file
-  - [ ] Add backend build job (Maven)
-  - [ ] Add frontend build job (npm)
-  - [ ] Configure artifact storage
-- [ ] Configure test execution
-  - [ ] Add backend test execution
-  - [ ] Add frontend test execution
-  - [ ] Configure test result reporting
-  - [ ] Set up test coverage reporting
-- [ ] Set up code quality checks
-  - [ ] Add linting checks (backend: Checkstyle)
-  - [ ] Add linting checks (frontend: ESLint)
-  - [ ] Optional: Configure SonarQube/CodeClimate
-  - [ ] Add branch protection rules
+- [x] Set up GitHub Actions / GitLab CI
+  - [x] Create .github/workflows directory
+  - [x] Choose CI platform (GitHub Actions recommended)
+  - [x] Set up repository secrets
+- [x] Configure build pipeline
+  - [x] Create workflow YAML file
+  - [x] Add backend build job (Maven)
+  - [x] Add frontend build job (npm)
+- [x] Configure test execution
+  - [x] Add backend test execution
+  - [x] Add frontend test execution
 
 ### 3. Documentation
 
-- [ ] README.md with setup instructions
-  - [ ] Add project description
-  - [ ] Add prerequisites section
-  - [ ] Add installation instructions
-  - [ ] Add running instructions (backend, frontend, docker)
-  - [ ] Add testing instructions
-  - [ ] Add troubleshooting section
-  - [ ] Add technology stack list
-- [ ] CONTRIBUTING.md guidelines
-  - [ ] Add code of conduct
-  - [ ] Add contribution guidelines
-  - [ ] Add branch naming conventions
-  - [ ] Add commit message conventions
-  - [ ] Add pull request process
-  - [ ] Add coding standards
-- [ ] API documentation setup (Swagger/OpenAPI)
-  - [ ] Add Springdoc OpenAPI dependency
-  - [ ] Configure Swagger UI
-  - [ ] Add OpenAPI annotations to controllers
-  - [ ] Test Swagger UI (http://localhost:8080/swagger-ui.html)
-  - [ ] Configure API documentation properties
-
----
-
-## Validation & Testing Tasks
-
-- [ ] Verify backend health check endpoint
-  - [ ] Create HealthController
-  - [ ] Implement GET /actuator/health endpoint
-  - [ ] Test endpoint returns 200 OK
-- [ ] Verify frontend landing page
-  - [ ] Create basic home component
-  - [ ] Add welcome message
-  - [ ] Test page loads at http://localhost:4200
-- [ ] Test Docker Compose setup
-  - [ ] Run `docker-compose up`
-  - [ ] Verify all services start
-  - [ ] Verify backend connects to PostgreSQL
-  - [ ] Verify backend connects to Kafka
-  - [ ] Verify frontend proxies to backend
-- [ ] Test database migrations
-  - [ ] Run application and verify Flyway executes
-  - [ ] Check all tables are created
-  - [ ] Verify indexes are created
-  - [ ] Verify triggers are created
-- [ ] Run all tests
-  - [ ] Run backend unit tests: `mvn test`
-  - [ ] Run backend integration tests: `mvn verify`
-  - [ ] Run frontend tests: `ng test`
-  - [ ] Verify all tests pass
-- [ ] Test CI/CD pipeline
-  - [ ] Push code to repository
-  - [ ] Verify CI pipeline triggers
-  - [ ] Verify all jobs pass
-  - [ ] Fix any failing jobs
-
----
-
-## Deliverables Checklist
-
-- [ ] Running development environment (all services start without errors)
-- [ ] Database with initial schema (all tables, indexes, triggers created)
-- [ ] Backend skeleton with health check endpoint (accessible and returns 200)
-- [ ] Frontend skeleton with landing page (displays welcome page)
-- [ ] Docker Compose setup working (all containers running)
-- [ ] CI/CD pipeline running (builds and tests pass)
-- [ ] All test infrastructure in place (tests can be executed)
-- [ ] Documentation complete (README, CONTRIBUTING, API docs)
-
----
-
-## Notes
-
-- **Dependencies**: Some tasks must be completed in order (e.g., Docker Compose before testing full stack)
-- **Blockers**: Document any blockers or issues encountered
-- **Time Tracking**: Track actual time spent vs estimated time
-- **Questions**: Document any unclear requirements or decisions needed
-
----
-
-## Progress Tracking
-
-**Started**: [Date]
-**Completed**: [Date]
-**Actual Duration**: [X days]
-**Status**: 🔴 Not Started | 🟡 In Progress | 🟢 Completed
-
----
-
-## Team Assignments (Optional)
-
-| Task Category            | Assigned To | Status |
-|--------------------------|-------------|--------|
-| Backend - Project Init   |             |        |
-| Backend - Database       |             |        |
-| Backend - Security       |             |        |
-| Backend - Kafka          |             |        |
-| Backend - Spring AI      |             |        |
-| Backend - Testing        |             |        |
-| Frontend - Project Setup |             |        |
-| Frontend - Environment   |             |        |
-| Frontend - Core Services |             |        |
-| Frontend - Routing       |             |        |
-| DevOps - Docker          |             |        |
-| DevOps - CI/CD           |             |        |
-| DevOps - Documentation   |             |        |
-
----
-
-## Post-Iteration Review
-
-**What went well**:
-- [To be filled after iteration]
-
-**What could be improved**:
-- [To be filled after iteration]
-
-**Blockers encountered**:
-- [To be filled after iteration]
-
-**Lessons learned**:
-- [To be filled after iteration]
-
-**Ready for next iteration?**: [ ] Yes [ ] No
-- If No, what's missing: _______________
+- [x] README.md with setup instructions
+  - [x] Add project description
+  - [x] Add prerequisites section
+  - [x] Add installation instructions
+  - [x] Add running instructions (backend, frontend, docker)
+  - [x] Add testing instructions
+  - [x] Add the tech stack list

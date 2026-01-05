@@ -5,6 +5,8 @@ vars:
   MVNW: '{{if eq .GOOS "windows"}}mvnw.cmd{{else}}./mvnw{{end}}'
   SLEEP_CMD: '{{if eq .GOOS "windows"}}timeout{{else}}sleep{{end}}'
   BACKEND_DIR: "geeksclub-api"
+  FRONTEND_DIR: "geeksclub-angular"
+  FRONTEND_IMG_NAME: "sivaprasadreddy/geeksclub-angular"
   DC_DIR: "docker"
   DC_FILE: "{{.DC_DIR}}/compose.yml"
 
@@ -12,6 +14,7 @@ tasks:
   default:
     cmds:
       - task: build_backend
+      - task: build_frontend
 
   build_backend:
     dir: "{{.BACKEND_DIR}}"
@@ -24,6 +27,19 @@ tasks:
     desc: Build Docker Image using Buildpacks
     cmds:
       - "{{.MVNW}} clean compile spring-boot:build-image -DskipTests"
+
+  build_frontend:
+    dir: "{{.FRONTEND_DIR}}"
+    desc: Build frontend
+    cmds:
+      - "npm install"
+      - "npm run build"
+
+  build_frontend_image:
+    dir: "{{.FRONTEND_DIR}}"
+    desc: Build Frontend Docker Image
+    cmds:
+      - "docker build --tag {{.FRONTEND_IMG_NAME}} ."
 
   start:
     desc: Start the application
