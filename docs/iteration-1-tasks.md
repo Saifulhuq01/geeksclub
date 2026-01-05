@@ -10,43 +10,43 @@
 
 ### 1. Project Initialization
 
-- [ ] Create Spring Boot project with Maven
-  - [ ] Use Spring Initializr with Java 25 (or latest LTS)
-  - [ ] Add core dependencies (Web, Data JPA, Security, Validation)
-  - [ ] Set up initial project structure
-- [ ] Configure project structure
-  - [ ] Create package structure (controller, service, repository, model, dto, config, exception)
-  - [ ] Decide on module structure (users, messages, etc)
-- [ ] Set up application.propertie
-  - [ ] Configure server port
-  - [ ] Set up application name
-  - [ ] Configure logging levels
-- [ ] Configure Spring profiles (local, prod)
-  - [ ] Create application-local.propertie
-  - [ ] Create application-prod.propertie
-  - [ ] Set active profile configuration
+- [x] Create Spring Boot project with Maven
+  - [x] Use Spring Initializr with Java 25 (or latest LTS)
+  - [x] Add core dependencies (Web, Data JPA, Security, Validation)
+  - [x] Set up initial project structure
+- [x] Configure project structure
+  - [x] Create package structure (controller, service, repository, model, dto, config, exception)
+  - [x] Decide on module structure (users, messages, etc)
+- [x] Set up application.propertie
+  - [x] Configure server port
+  - [x] Set up application name
+  - [x] Configure logging levels
+- [x] Configure Spring profiles (local, prod)
+  - [x] Create application-local.propertie
+  - [x] Create application-prod.propertie
+  - [x] Set active profile configuration
 
 ### 2. Database Setup
 
-- [ ] Set up PostgreSQL locally using Docker Compose
-  - [ ] Add PostgreSQL service to docker-compose.yml
-  - [ ] Configure database name, username, password
-  - [ ] Set up volume for data persistence
-  - [ ] Configure port mapping (5432)
-- [ ] Configure Spring Data JPA
-  - [ ] Add Spring Data JPA dependency
-  - [ ] Add PostgreSQL driver dependency
-  - [ ] Configure datasource in application.propertie
-  - [ ] Set up JPA properties (ddl-auto, show-sql, etc.)
-- [ ] Set up Flyway for database migrations
-  - [ ] Add Flyway dependency
-  - [ ] Create db/migration folder structure
-  - [ ] Configure Flyway settings in application.propertie
-- [ ] Create initial migration scripts
-  - [ ] V1__create_users_table.sql
-  - [ ] V2__create_messages_table.sql
-  - [ ] V3__create_votes_table.sql
-  - [ ] V4__initialize_seed_data.sql
+- [x] Set up PostgreSQL locally using Docker Compose
+  - [x] Add PostgreSQL service to docker-compose.yml
+  - [x] Configure database name, username, password
+  - [x] Set up volume for data persistence
+  - [x] Configure port mapping (5432)
+- [x] Configure Spring Data JPA
+  - [x] Add Spring Data JPA dependency
+  - [x] Add PostgreSQL driver dependency
+  - [x] Configure datasource in application.propertie
+  - [x] Set up JPA properties (ddl-auto, show-sql, etc.)
+- [x] Set up Flyway for database migrations
+  - [x] Add Flyway dependency
+  - [x] Create db/migration folder structure
+  - [x] Configure Flyway settings in application.propertie
+- [x] Create initial migration scripts
+  - [x] V1__create_users_table.sql
+  - [x] V2__create_messages_table.sql
+  - [x] V3__create_votes_table.sql
+  - [x] V4__initialize_seed_data.sql
 
 ### 3. Security Configuration
 
