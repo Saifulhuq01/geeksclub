@@ -13,6 +13,7 @@ Stores user account information and authentication details.
 ```sql
 CREATE TABLE users (
     id BIGINT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
