@@ -69,23 +69,22 @@
 
 ### 4. Kafka Setup
 
-- [ ] Set up Kafka locally using Docker Compose
-  - [ ] Add Zookeeper service to docker-compose.yml
-  - [ ] Add Kafka service to docker-compose.yml
-  - [ ] Configure Kafka port (9092)
-  - [ ] Set up volumes for Kafka data
-- [ ] Configure Spring Kafka
-  - [ ] Add Spring Kafka dependency
-  - [ ] Configure Kafka bootstrap servers in application.properties
-  - [ ] Set up consumer and producer properties
-- [ ] Create Kafka configuration classes
-  - [ ] Create KafkaProducerConfig
-  - [ ] Create KafkaConsumerConfig
-  - [ ] Create KafkaTopicConfig
-- [ ] Set up topic creation
-  - [ ] Define topic names (user-events, message-events, vote-events)
-  - [ ] Create topics with appropriate partitions and replication
-  - [ ] Add topic creation beans
+- [x] Set up Kafka locally using Docker Compose
+  - [x] Add Kafka service to docker-compose.yml
+  - [x] Configure Kafka port (9092)
+  - [x] Set up volumes for Kafka data
+- [x] Configure Spring Kafka
+  - [x] Add Spring Kafka dependency
+  - [x] Configure Kafka bootstrap servers in application.properties
+  - [x] Set up consumer and producer properties
+- [x] Create Kafka configuration classes
+  - [x] Create KafkaProducerConfig
+  - [x] Create KafkaConsumerConfig
+  - [x] Create KafkaTopicConfig
+- [x] Set up topic creation
+  - [x] Define topic names (user-events, message-events, vote-events)
+  - [x] Create topics with appropriate partitions and replication
+  - [x] Add topic creation beans
 
 ### 5. Spring AI Setup
 
