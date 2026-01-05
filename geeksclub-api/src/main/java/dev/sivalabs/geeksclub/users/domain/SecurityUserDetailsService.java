@@ -1,5 +1,6 @@
 package dev.sivalabs.geeksclub.users.domain;
 
+import dev.sivalabs.geeksclub.users.domain.dto.UserVM;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

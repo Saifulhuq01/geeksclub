@@ -57,4 +57,8 @@ class UserEntity extends BaseEntity {
     public Role getRole() {
         return role;
     }
+
+    public void updateFullName(String fullName) {
+        this.fullName = fullName;
+    }
 }

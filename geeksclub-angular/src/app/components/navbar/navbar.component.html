@@ -29,7 +29,7 @@
         </a>
       </li>
 
-      @if (!isAuthenticated()) {
+      @if (!authService.isAuthenticated()) {
         <li role="none">
           <a
             routerLink="/login"
@@ -52,7 +52,7 @@
         </li>
       }
 
-      @if (isAuthenticated()) {
+      @if (authService.isAuthenticated()) {
         <li role="none" class="relative">
           <button
             type="button"
@@ -71,8 +71,8 @@
           @if (isDropdownOpen()) {
             <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
               <div class="px-4 py-2 border-b border-gray-200">
-                <p class="text-sm font-semibold text-gray-900 m-0">{{ 'Siva Katamreddy' }}</p>
-                <p class="text-xs text-gray-500 m-0">{{ 'siva@gmail.com' }}</p>   mail.com'
+                <p class="text-sm font-semibold text-gray-900 m-0">{{ authService.user()?.fullName }}</p>
+                <p class="text-xs text-gray-500 m-0">{{ authService.user()?.email }}</p>
               </div>
               @if (isAdmin()) {
                 <a

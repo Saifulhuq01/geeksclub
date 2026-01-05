@@ -1,5 +1,6 @@
 package dev.sivalabs.geeksclub.users.domain;
 
+import dev.sivalabs.geeksclub.users.domain.dto.UserVM;
 import org.springframework.stereotype.Component;
 
 @Component

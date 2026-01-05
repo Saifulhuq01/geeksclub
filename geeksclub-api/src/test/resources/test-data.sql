@@ -5,7 +5,7 @@ DELETE FROM users;
 INSERT INTO users (id, full_name, username, email, password, role, created_at, updated_at)
 VALUES
     -- Regular Users
-    (1, 'Siva Katamreddy', 'siva', 'siva@gmail.com', '$2a$10$mk1.OKxiHA84T7Np6U3x5uJt2bdywFYiIKEztVfqcemcKtzZS2NGS', 'USER', '2024-12-01 10:00:00+00', '2024-12-01 10:00:00+00'),
+    (1, 'Siva Katamreddy', 'siva', 'siva@gmail.com', '$2a$10$JkNxo6n9yH2pvDRtXx7pZeSrdmuVL0nAU0CSu160iIVS.JmHEEYqa', 'USER', '2024-12-01 10:00:00+00', '2024-12-01 10:00:00+00'),
     (2, 'Jane Smith', 'janesmith', 'jane.smith@example.com', '$2a$10$W.91iMpN6eYPlf04RMUhMO9Qg2jMEs5LjsSbnlLFf9Wl.uDI2bm8G', 'USER', '2024-12-02 11:30:00+00', '2024-12-02 11:30:00+00'),
     (3, 'Tech Guru', 'techguru', 'tech.guru@example.com', '$2a$10$W.91iMpN6eYPlf04RMUhMO9Qg2jMEs5LjsSbnlLFf9Wl.uDI2bm8G', 'USER', '2024-12-03 09:15:00+00', '2024-12-03 09:15:00+00'),
     (4, 'Code Ninja', 'codeninja', 'code.ninja@example.com', '$2a$10$W.91iMpN6eYPlf04RMUhMO9Qg2jMEs5LjsSbnlLFf9Wl.uDI2bm8G', 'USER', '2024-12-04 14:20:00+00', '2024-12-04 14:20:00+00'),
@@ -17,7 +17,7 @@ VALUES
     (10, 'David Chen', 'davidchen', 'david.chen@example.com', '$2a$10$W.91iMpN6eYPlf04RMUhMO9Qg2jMEs5LjsSbnlLFf9Wl.uDI2bm8G', 'USER', '2024-12-10 15:00:00+00', '2024-12-10 15:00:00+00'),
 
     -- Admin User
-    (100, 'Admin User', 'admin', 'admin@gmail.com', '$2a$10$3QkfRh4wc3h9V6wtAOG6Xu.lZ9Q8WKQK5wD5Gbph96I6mW7w0lrla', 'ADMIN', '2024-11-01 08:00:00+00', '2024-11-01 08:00:00+00');
+    (100, 'Admin User', 'admin', 'admin@gmail.com', '$2a$10$j4aBJ0ySE/L1Ms8hA9Y/XO4G.afPe4eU4484d55ZUwCBwMyr5L0le', 'ADMIN', '2024-11-01 08:00:00+00', '2024-11-01 08:00:00+00');
 
 INSERT INTO messages (id, user_id, content, is_spam, spam_confidence, status, created_at, updated_at)
 VALUES
