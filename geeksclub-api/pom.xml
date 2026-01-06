@@ -25,7 +25,7 @@
         <jacoco.minimum.coverage>50%</jacoco.minimum.coverage>
         <dockerImageName>sivaprasadreddy/geeksclub-api</dockerImageName>
         <jilt.version>1.9</jilt.version>
-        <spring-ai.version>1.0.0-M6</spring-ai.version>
+        <spring-ai.version>2.0.0-M1</spring-ai.version>
     </properties>
 
     <dependencies>
