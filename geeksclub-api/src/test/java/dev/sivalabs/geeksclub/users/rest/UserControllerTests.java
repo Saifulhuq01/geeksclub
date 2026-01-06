@@ -1,7 +1,6 @@
 package dev.sivalabs.geeksclub.users.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.HttpStatus.CREATED;
 
 import dev.sivalabs.geeksclub.BaseIntegrationTest;
 import dev.sivalabs.geeksclub.users.domain.dto.UserVM;
@@ -12,17 +11,17 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 @Sql("/test-data.sql")
 class UserControllerTests extends BaseIntegrationTest {
 
     @Test
     void shouldRegisterUserSuccessfully() {
-        MvcTestResult testResult = mvc.post()
+        RegisterUserResponse response = restTestClient
+                .post()
                 .uri("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .body("""
                         {
                           "fullName":"User123",
                           "username":"user123",
@@ -30,19 +29,17 @@ class UserControllerTests extends BaseIntegrationTest {
                           "password":"Secret@121212"
                         }
                         """)
-                .exchange();
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .returnResult(RegisterUserResponse.class)
+                .getResponseBody();
 
-        assertThat(testResult)
-                .hasStatus(CREATED)
-                .bodyJson()
-                .convertTo(RegisterUserResponse.class)
-                .satisfies(response -> {
-                    assertThat(response).isNotNull();
-                    assertThat(response.fullName()).isEqualTo("User123");
-                    assertThat(response.username()).isEqualTo("user123");
-                    assertThat(response.email()).isEqualTo("user123@gmail.com");
-                    assertThat(response.role().name()).isEqualTo("USER");
-                });
+        assertThat(response).isNotNull();
+        assertThat(response.fullName()).isEqualTo("User123");
+        assertThat(response.username()).isEqualTo("user123");
+        assertThat(response.email()).isEqualTo("user123@gmail.com");
+        assertThat(response.role().name()).isEqualTo("USER");
     }
 
     @ParameterizedTest
@@ -54,75 +51,86 @@ class UserControllerTests extends BaseIntegrationTest {
     })
     void shouldNotRegisterWithoutRequiredFields(
             String fullName, String username, String email, String password, String errorFieldName) {
-        MvcTestResult testResult = mvc.post()
+
+        restTestClient
+                .post()
                 .uri("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .body("""
                         {
                           "fullName":%s,
                           "username":%s,
                           "email":%s,
                           "password":%s
                         }
-                        """.formatted(fullName, username, email, password))
-                .exchange();
-
-        assertThat(testResult).hasStatus(HttpStatus.BAD_REQUEST);
+                """.formatted(fullName, username, email, password))
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+        // TODO; assert error field
     }
 
     @Test
     void shouldGetUserByUsername() {
         String token = getUserAuthToken();
 
-        MvcTestResult testResult = mvc.get()
+        UserVM user = restTestClient
+                .get()
                 .uri("/api/users/siva")
                 .header("Authorization", "Bearer " + token)
-                .exchange();
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(UserVM.class)
+                .getResponseBody();
 
-        assertThat(testResult).hasStatusOk().bodyJson().convertTo(UserVM.class).satisfies(user -> {
-            assertThat(user).isNotNull();
-            assertThat(user.username()).isEqualTo("siva");
-            assertThat(user.email()).isEqualTo("siva@gmail.com");
-            assertThat(user.fullName()).isEqualTo("Siva Katamreddy");
-        });
+        assertThat(user).isNotNull();
+        assertThat(user.username()).isEqualTo("siva");
+        assertThat(user.email()).isEqualTo("siva@gmail.com");
+        assertThat(user.fullName()).isEqualTo("Siva Katamreddy");
     }
 
     @Test
     void shouldReturnNotFoundForNonExistentUser() {
         String token = getUserAuthToken();
 
-        MvcTestResult testResult = mvc.get()
+        restTestClient
+                .get()
                 .uri("/api/users/nonexistent")
                 .header("Authorization", "Bearer " + token)
-                .exchange();
-
-        assertThat(testResult).hasStatus(HttpStatus.NOT_FOUND);
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
     void shouldUpdateUserProfile() {
         String token = getUserAuthToken();
 
-        MvcTestResult testResult = mvc.put()
+        restTestClient
+                .put()
                 .uri("/api/users/me")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                .body("""
                         {
                           "fullName": "Siva Updated"
                         }
                         """)
-                .exchange();
+                .exchange()
+                .expectStatus()
+                .isOk();
 
-        assertThat(testResult).hasStatusOk();
-
-        MvcTestResult getResult = mvc.get()
+        UserVM userVM = restTestClient
+                .get()
                 .uri("/api/users/siva")
-                .header("Authorization", "Bearer " + token)
-                .exchange();
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(UserVM.class)
+                .getResponseBody();
 
-        assertThat(getResult).hasStatusOk().bodyJson().convertTo(UserVM.class).satisfies(user -> {
-            assertThat(user.fullName()).isEqualTo("Siva Updated");
-        });
+        assertThat(userVM).isNotNull();
+        assertThat(userVM.fullName()).isEqualTo("Siva Updated");
     }
 }
