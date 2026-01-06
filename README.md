@@ -1,6 +1,9 @@
 # GeeksClub
 GeeksClub is an application that helps techies to share their knowledge and thoughts.
 
+[![Build](https://github.com/sivaprasadreddy/geeksclub/actions/workflows/api-ci.yml/badge.svg)](https://github.com/sivaprasadreddy/geeksclub/actions/workflows/api-ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=sivaprasadreddy_geeksclub&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=sivaprasadreddy_geeksclub)
+
 ## Tech Stack
 
 ### Backend
