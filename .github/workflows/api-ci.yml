@@ -8,6 +8,8 @@ env:
 
 on:
   push:
+    paths:
+      - geeksclub-api/**
     branches:
       - 'main'
       - 'feature/*'
@@ -20,6 +22,9 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./geeksclub-api
     steps:
       - uses: actions/checkout@v6
 

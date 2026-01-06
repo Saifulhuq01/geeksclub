@@ -1,6 +1,8 @@
 name: Angular Build
 on:
   push:
+    paths:
+      - geeksclub-angular/**
     branches: [ "main" ]
 
 jobs:
