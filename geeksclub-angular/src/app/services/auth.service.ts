@@ -41,18 +41,20 @@ export interface RegisterResponse {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${ getApiBaseUrl()}/api`;
-  private readonly TOKEN_KEY = 'geeksclub_auth_token';
+  private readonly ACCESS_TOKEN_KEY = 'geeksclub_access_token';
+  private readonly REFRESH_TOKEN_KEY = 'geeksclub_refresh_token';
   private readonly USER_KEY = 'geeksclub_auth_user';
 
   private readonly currentUser = signal<User | null>(this.loadUserFromStorage());
-  private readonly token = signal<string | null>(this.loadTokenFromStorage());
+  private readonly accessToken = signal<string | null>(this.loadTokenFromStorage(this.ACCESS_TOKEN_KEY));
+  private readonly refreshToken = signal<string | null>(this.loadTokenFromStorage(this.REFRESH_TOKEN_KEY));
 
-  readonly isAuthenticated = computed(() => this.currentUser() !== null && this.token() !== null);
+  readonly isAuthenticated = computed(() => this.currentUser() !== null && this.accessToken() !== null);
   readonly user = this.currentUser.asReadonly();
 
-  private loadTokenFromStorage(): string | null {
+  private loadTokenFromStorage(key: string): string | null {
     if (typeof window !== 'undefined' && window.localStorage) {
-      return localStorage.getItem(this.TOKEN_KEY);
+      return localStorage.getItem(key);
     }
     return null;
   }
@@ -85,26 +87,34 @@ export class AuthService {
       role: response.role
     };
 
-    this.token.set(response.accessToken);
+    this.accessToken.set(response.accessToken);
+    this.refreshToken.set(response.refreshToken);
     this.currentUser.set(user);
 
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(this.TOKEN_KEY, response.accessToken);
+      localStorage.setItem(this.ACCESS_TOKEN_KEY, response.accessToken);
+      localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refreshToken);
       localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     }
   }
 
   logout(): void {
-    this.token.set(null);
+    this.accessToken.set(null);
+    this.refreshToken.set(null);
     this.currentUser.set(null);
 
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
       localStorage.removeItem(this.USER_KEY);
     }
   }
 
-  getToken(): string | null {
-    return this.token();
+  getAccessToken(): string | null {
+    return this.accessToken();
+  }
+
+  getRefreshToken(): string | null {
+    return this.refreshToken();
   }
 }

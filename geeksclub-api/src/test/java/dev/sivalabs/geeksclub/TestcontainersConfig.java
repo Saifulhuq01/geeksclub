@@ -21,6 +21,6 @@ public class TestcontainersConfig {
     @Bean
     @ServiceConnection
     ConfluentKafkaContainer kafkaContainer() {
-        return new ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
+        return new ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:8.1.1"));
     }
 }
