@@ -1,7 +1,9 @@
 package dev.sivalabs.geeksclub.rest;
 
+import dev.sivalabs.geeksclub.domain.dto.DailyStatisticsVM;
 import dev.sivalabs.geeksclub.domain.dto.SystemOverviewVM;
 import dev.sivalabs.geeksclub.domain.service.AnalyticsService;
+import dev.sivalabs.geeksclub.rest.dto.DailyStatisticsResponse;
 import dev.sivalabs.geeksclub.rest.dto.SystemOverviewResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -37,6 +40,27 @@ class AdminAnalyticsController {
                 overview.spamDetected(),
                 overview.spamRate(),
                 overview.timestamp());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/daily")
+    @SecurityRequirement(name = "Bearer")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    ResponseEntity<DailyStatisticsResponse> getDailyStatistics(@RequestParam(defaultValue = "30") int days) {
+        DailyStatisticsVM stats = analyticsService.getDailyStatistics(days);
+
+        var statistics = stats.statistics().stream()
+                .map(s -> new DailyStatisticsResponse.DailyStatistic(
+                        s.date(), s.messageCount(), s.activeUsers(), s.spamCount(), s.totalVotes()))
+                .toList();
+
+        var period = new DailyStatisticsResponse.Period(
+                stats.period().startDate(),
+                stats.period().endDate(),
+                stats.period().days());
+
+        DailyStatisticsResponse response = new DailyStatisticsResponse(statistics, period);
 
         return ResponseEntity.ok(response);
     }

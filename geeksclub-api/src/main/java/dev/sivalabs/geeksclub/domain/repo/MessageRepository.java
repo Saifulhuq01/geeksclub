@@ -2,6 +2,7 @@ package dev.sivalabs.geeksclub.domain.repo;
 
 import dev.sivalabs.geeksclub.domain.entity.MessageEntity;
 import java.time.Instant;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -68,4 +69,23 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
 
     @Query("SELECT COUNT(m) FROM MessageEntity m WHERE m.isSpam = true")
     long countSpamMessages();
+
+    @Query(value = """
+            SELECT DATE(created_at) as date,
+                   COUNT(*) as messageCount,
+                   COUNT(*) FILTER (WHERE is_spam = true) as spamCount
+            FROM messages
+            WHERE created_at >= :startDate
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+            """, nativeQuery = true)
+    List<DailyMessageStats> getDailyMessageStats(@Param("startDate") Instant startDate);
+
+    interface DailyMessageStats {
+        java.sql.Date getDate();
+
+        long getMessageCount();
+
+        long getSpamCount();
+    }
 }

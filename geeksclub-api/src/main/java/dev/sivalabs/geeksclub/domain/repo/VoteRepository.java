@@ -35,11 +35,26 @@ public interface VoteRepository extends JpaRepository<VoteEntity, Long> {
     @Query("SELECT COUNT(v) FROM VoteEntity v WHERE v.createdAt >= :since")
     long countVotesCreatedSince(@Param("since") Instant since);
 
+    @Query(value = """
+            SELECT DATE(created_at) as date, COUNT(*) as voteCount
+            FROM votes
+            WHERE created_at >= :startDate
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+            """, nativeQuery = true)
+    List<DailyVoteStats> getDailyVoteStats(@Param("startDate") Instant startDate);
+
     interface VoteCount {
         Long getMessageId();
 
         Long getUpvoteCount();
 
         Long getDownvoteCount();
+    }
+
+    interface DailyVoteStats {
+        java.sql.Date getDate();
+
+        long getVoteCount();
     }
 }

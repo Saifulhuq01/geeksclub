@@ -1,11 +1,19 @@
 package dev.sivalabs.geeksclub.domain.service;
 
+import dev.sivalabs.geeksclub.domain.dto.DailyStatistic;
+import dev.sivalabs.geeksclub.domain.dto.DailyStatisticsVM;
 import dev.sivalabs.geeksclub.domain.dto.SystemOverviewVM;
 import dev.sivalabs.geeksclub.domain.repo.MessageRepository;
 import dev.sivalabs.geeksclub.domain.repo.UserRepository;
 import dev.sivalabs.geeksclub.domain.repo.VoteRepository;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,5 +58,54 @@ public class AnalyticsService {
                 spamDetected,
                 spamRate,
                 now);
+    }
+
+    public DailyStatisticsVM getDailyStatistics(int days) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days - 1);
+
+        Instant startInstant = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
+
+        // Fetch daily stats from repositories
+        List<MessageRepository.DailyMessageStats> messageStats = messageRepository.getDailyMessageStats(startInstant);
+        List<VoteRepository.DailyVoteStats> voteStats = voteRepository.getDailyVoteStats(startInstant);
+        List<UserRepository.DailyActiveUserStats> activeUserStats =
+                userRepository.getDailyActiveUserStats(startInstant);
+
+        // Create maps for easy lookup
+        Map<LocalDate, Long> messageCountMap = new HashMap<>();
+        Map<LocalDate, Long> spamCountMap = new HashMap<>();
+        Map<LocalDate, Long> voteCountMap = new HashMap<>();
+        Map<LocalDate, Long> activeUserCountMap = new HashMap<>();
+
+        messageStats.forEach(stat -> {
+            LocalDate date = stat.getDate().toLocalDate();
+            messageCountMap.put(date, stat.getMessageCount());
+            spamCountMap.put(date, stat.getSpamCount());
+        });
+
+        voteStats.forEach(stat -> {
+            LocalDate date = stat.getDate().toLocalDate();
+            voteCountMap.put(date, stat.getVoteCount());
+        });
+
+        activeUserStats.forEach(stat -> {
+            LocalDate date = stat.getDate().toLocalDate();
+            activeUserCountMap.put(date, stat.getActiveUserCount());
+        });
+
+        // Build daily statistics list
+        List<DailyStatistic> statistics = new ArrayList<>();
+        for (LocalDate date = endDate; !date.isBefore(startDate); date = date.minusDays(1)) {
+            statistics.add(new DailyStatistic(
+                    date,
+                    messageCountMap.getOrDefault(date, 0L).intValue(),
+                    activeUserCountMap.getOrDefault(date, 0L).intValue(),
+                    spamCountMap.getOrDefault(date, 0L).intValue(),
+                    voteCountMap.getOrDefault(date, 0L).intValue()));
+        }
+
+        DailyStatisticsVM.Period period = new DailyStatisticsVM.Period(startDate, endDate, days);
+        return new DailyStatisticsVM(statistics, period);
     }
 }
