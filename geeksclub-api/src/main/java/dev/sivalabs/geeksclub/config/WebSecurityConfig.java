@@ -37,6 +37,10 @@ class WebSecurityConfig {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/*")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/messages")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/messages/*")
+                .permitAll()
                 .anyRequest()
                 .authenticated());
 

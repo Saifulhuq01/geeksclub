@@ -1,8 +1,19 @@
 package dev.sivalabs.geeksclub.messages.domain;
 
 import dev.sivalabs.geeksclub.messages.domain.dto.CreateMessageCmd;
+import dev.sivalabs.geeksclub.messages.domain.dto.MessageFeedItemVM;
 import dev.sivalabs.geeksclub.messages.domain.dto.MessageVM;
+import dev.sivalabs.geeksclub.shared.entity.BaseEntity;
 import dev.sivalabs.geeksclub.shared.utils.IdGenerator;
+import dev.sivalabs.geeksclub.users.domain.UserRepository;
+import dev.sivalabs.geeksclub.votes.domain.VoteEntity;
+import dev.sivalabs.geeksclub.votes.domain.VoteRepository;
+import dev.sivalabs.geeksclub.votes.domain.VoteType;
+import java.util.*;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,10 +22,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class MessageService {
     private final MessageRepository messageRepository;
     private final MessageEntityMapper messageEntityMapper;
+    private final VoteRepository voteRepository;
+    private final UserRepository userRepository;
 
-    MessageService(MessageRepository messageRepository, MessageEntityMapper messageEntityMapper) {
+    MessageService(
+            MessageRepository messageRepository,
+            MessageEntityMapper messageEntityMapper,
+            VoteRepository voteRepository,
+            UserRepository userRepository) {
         this.messageRepository = messageRepository;
         this.messageEntityMapper = messageEntityMapper;
+        this.voteRepository = voteRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -23,4 +42,81 @@ public class MessageService {
         var savedMessage = messageRepository.save(message);
         return messageEntityMapper.toMessageVM(savedMessage);
     }
+
+    public Page<MessageFeedItemVM> getMessageFeed(int page, int size, SortBy sortBy, Long currentUserId) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MessageEntity> messagePage =
+                switch (sortBy) {
+                    case RECENT -> messageRepository.findAllPublishedOrderByCreatedAtDesc(pageable);
+                    case UPVOTED -> messageRepository.findAllPublishedOrderByUpvotesDesc(pageable);
+                    case DOWNVOTED -> messageRepository.findAllPublishedOrderByDownvotesDesc(pageable);
+                    case TRENDING -> messageRepository.findAllPublishedOrderByTrending(pageable);
+                };
+
+        if (messagePage.isEmpty()) {
+            return messagePage.map(m -> null);
+        }
+
+        List<Long> messageIds =
+                messagePage.getContent().stream().map(MessageEntity::getId).collect(Collectors.toList());
+
+        // Get vote counts for all messages
+        Map<Long, VoteCounts> voteCountsMap = getVoteCountsMap(messageIds);
+
+        // Get user votes if authenticated
+        Map<Long, VoteType> userVotesMap = new HashMap<>();
+        if (currentUserId != null) {
+            userVotesMap = getUserVotesMap(messageIds, currentUserId);
+        }
+
+        // Get user info for all message authors
+        Set<Long> userIds =
+                messagePage.getContent().stream().map(MessageEntity::getUserId).collect(Collectors.toSet());
+        Map<Long, UserInfo> userInfoMap = getUserInfoMap(userIds);
+
+        Map<Long, VoteType> finalUserVotesMap = userVotesMap;
+        return messagePage.map(message -> {
+            VoteCounts voteCounts = voteCountsMap.getOrDefault(message.getId(), new VoteCounts(0, 0));
+            VoteType userVote = finalUserVotesMap.get(message.getId());
+            UserInfo userInfo = userInfoMap.get(message.getUserId());
+
+            return new MessageFeedItemVM(
+                    message.getId(),
+                    message.getContent(),
+                    userInfo != null ? userInfo.id() : null,
+                    userInfo != null ? userInfo.username() : null,
+                    message.getStatus(),
+                    message.isSpam(),
+                    voteCounts.upvoteCount(),
+                    voteCounts.downvoteCount(),
+                    voteCounts.upvoteCount() - voteCounts.downvoteCount(),
+                    userVote != null ? userVote.name() : null,
+                    message.getCreatedAt());
+        });
+    }
+
+    private Map<Long, VoteCounts> getVoteCountsMap(List<Long> messageIds) {
+        List<VoteRepository.VoteCount> voteCounts = voteRepository.getVoteCountsByMessageIds(messageIds);
+        return voteCounts.stream()
+                .collect(Collectors.toMap(
+                        VoteRepository.VoteCount::getMessageId,
+                        vc -> new VoteCounts(
+                                vc.getUpvoteCount().intValue(),
+                                vc.getDownvoteCount().intValue())));
+    }
+
+    private Map<Long, VoteType> getUserVotesMap(List<Long> messageIds, Long userId) {
+        List<VoteEntity> userVotes = voteRepository.findByMessageIdsAndUserId(messageIds, userId);
+        return userVotes.stream().collect(Collectors.toMap(VoteEntity::getMessageId, VoteEntity::getVoteType));
+    }
+
+    private Map<Long, UserInfo> getUserInfoMap(Set<Long> userIds) {
+        return userRepository.findAllById(userIds).stream()
+                .collect(
+                        Collectors.toMap(BaseEntity::getId, user -> new UserInfo(user.getId(), user.getUsername())));
+    }
+
+    record VoteCounts(int upvoteCount, int downvoteCount) {}
+
+    record UserInfo(Long id, String username) {}
 }

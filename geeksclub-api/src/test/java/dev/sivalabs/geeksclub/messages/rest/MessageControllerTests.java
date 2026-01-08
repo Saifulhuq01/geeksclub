@@ -124,4 +124,115 @@ class MessageControllerTests extends BaseIntegrationTest {
                 .expectStatus()
                 .isEqualTo(HttpStatus.BAD_REQUEST);
     }
+
+    @Test
+    void shouldGetMessageFeedWithoutAuthentication() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?page=0&size=20&sort=recent")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+        assertThat(response).contains("\"totalElements\"");
+    }
+
+    @Test
+    void shouldGetMessageFeedWithAuthentication() {
+        String token = getUserAuthToken();
+
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?page=0&size=20&sort=recent")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+        assertThat(response).contains("\"totalElements\"");
+    }
+
+    @Test
+    void shouldGetMessageFeedWithUpvotedSorting() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?page=0&size=20&sort=upvoted")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+    }
+
+    @Test
+    void shouldGetMessageFeedWithDownvotedSorting() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?page=0&size=20&sort=downvoted")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+    }
+
+    @Test
+    void shouldGetMessageFeedWithTrendingSorting() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?page=0&size=20&sort=trending")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+    }
+
+    @Test
+    void shouldGetMessageFeedWithPagination() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?page=0&size=5&sort=recent")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+        assertThat(response).contains("\"size\":5");
+    }
+
+    @Test
+    void shouldLimitPageSizeTo100() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?page=0&size=200&sort=recent")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"size\":100");
+    }
 }

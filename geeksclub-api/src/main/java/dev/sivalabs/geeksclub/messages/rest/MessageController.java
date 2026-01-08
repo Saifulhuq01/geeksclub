@@ -3,24 +3,24 @@ package dev.sivalabs.geeksclub.messages.rest;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import dev.sivalabs.geeksclub.messages.domain.MessageService;
+import dev.sivalabs.geeksclub.messages.domain.SortBy;
 import dev.sivalabs.geeksclub.messages.domain.dto.CreateMessageCmd;
+import dev.sivalabs.geeksclub.messages.domain.dto.MessageFeedItemVM;
 import dev.sivalabs.geeksclub.messages.rest.dto.CreateMessageRequest;
 import dev.sivalabs.geeksclub.messages.rest.dto.CreateMessageResponse;
+import dev.sivalabs.geeksclub.messages.rest.dto.MessageFeedItem;
 import dev.sivalabs.geeksclub.users.UserContextUtils;
 import dev.sivalabs.geeksclub.users.domain.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/messages")
 @Tag(name = "Messages API")
-@SecurityRequirement(name = "Bearer")
 class MessageController {
     private final MessageService messageService;
     private final UserService userService;
@@ -33,6 +33,7 @@ class MessageController {
     }
 
     @PostMapping("")
+    @SecurityRequirement(name = "Bearer")
     ResponseEntity<CreateMessageResponse> createMessage(@RequestBody @Valid CreateMessageRequest request) {
         var currentUser = userContextUtils.getCurrentUserOrThrow();
         var cmd = new CreateMessageCmd(currentUser.id(), request.content());
@@ -54,5 +55,34 @@ class MessageController {
                 message.updatedAt());
 
         return ResponseEntity.status(CREATED.value()).body(response);
+    }
+
+    @GetMapping("")
+    ResponseEntity<Page<MessageFeedItem>> getMessageFeed(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "recent") String sort) {
+
+        // Validate and limit page size
+        if (size > 100) {
+            size = 100;
+        }
+
+        SortBy sortBy = SortBy.fromString(sort);
+        Long currentUserId = userContextUtils.getCurrentUserId();
+
+        Page<MessageFeedItemVM> feedPage = messageService.getMessageFeed(page, size, sortBy, currentUserId);
+
+        Page<MessageFeedItem> response = feedPage.map(item -> new MessageFeedItem(
+                item.id(),
+                item.content(),
+                new MessageFeedItem.AuthorInfo(item.authorId(), item.authorUsername()),
+                item.status(),
+                item.isSpam(),
+                new MessageFeedItem.VotesInfo(item.upvoteCount(), item.downvoteCount(), item.score()),
+                item.userVote(),
+                item.createdAt()));
+
+        return ResponseEntity.ok(response);
     }
 }
