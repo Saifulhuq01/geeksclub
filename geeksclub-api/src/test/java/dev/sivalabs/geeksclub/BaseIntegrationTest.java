@@ -2,7 +2,7 @@ package dev.sivalabs.geeksclub;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import dev.sivalabs.geeksclub.users.rest.dto.LoginResponse;
+import dev.sivalabs.geeksclub.rest.dto.LoginResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;

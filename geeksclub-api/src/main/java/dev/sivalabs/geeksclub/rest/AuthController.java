@@ -1,0 +1,60 @@
+package dev.sivalabs.geeksclub.rest;
+
+import dev.sivalabs.geeksclub.domain.dto.AuthToken;
+import dev.sivalabs.geeksclub.domain.dto.LoginCmd;
+import dev.sivalabs.geeksclub.domain.dto.UserVM;
+import dev.sivalabs.geeksclub.domain.service.AuthService;
+import dev.sivalabs.geeksclub.domain.service.UserService;
+import dev.sivalabs.geeksclub.rest.dto.LoginRequest;
+import dev.sivalabs.geeksclub.rest.dto.LoginResponse;
+import dev.sivalabs.geeksclub.rest.dto.RefreshTokenResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@Tag(name = "Auth API")
+class AuthController {
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+    private final AuthService authService;
+    private final UserContextUtils userContextUtils;
+    private final UserService userService;
+
+    AuthController(AuthService authService, UserContextUtils userContextUtils, UserService userService) {
+        this.authService = authService;
+        this.userContextUtils = userContextUtils;
+        this.userService = userService;
+    }
+
+    @PostMapping("/api/auth/login")
+    LoginResponse login(@RequestBody @Valid LoginRequest req) {
+        log.info("Login request for email: {}", req.email());
+        var request = new LoginCmd(req.email(), req.password());
+        var authResponse = authService.authenticate(request);
+        return new LoginResponse(
+                authResponse.accessToken(),
+                authResponse.accessTokenExpiresAt(),
+                authResponse.refreshToken(),
+                authResponse.refreshTokenExpiresAt(),
+                authResponse.fullName(),
+                authResponse.username(),
+                authResponse.email(),
+                authResponse.role());
+    }
+
+    @PostMapping("/api/auth/refresh")
+    RefreshTokenResponse refreshToken() {
+        var currentUser = userContextUtils.getCurrentUserOrThrow();
+        UserVM userVM = userService.getByUsername(currentUser.username());
+        AuthToken authToken = authService.generateToken(userVM);
+        return new RefreshTokenResponse(
+                authToken.accessToken(),
+                authToken.accessTokenExpiresAt(),
+                authToken.refreshToken(),
+                authToken.refreshTokenExpiresAt());
+    }
+}
