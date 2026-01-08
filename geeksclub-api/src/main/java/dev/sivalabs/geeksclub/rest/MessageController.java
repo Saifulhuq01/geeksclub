@@ -104,6 +104,33 @@ class MessageController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/search")
+    ResponseEntity<Page<MessageFeedItem>> searchMessages(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        // Validate and limit page size
+        if (size > 100) {
+            size = 100;
+        }
+
+        Long currentUserId = userContextUtils.getCurrentUserId();
+        Page<MessageFeedItemVM> feedPage = messageService.searchMessages(q, page, size, currentUserId);
+
+        Page<MessageFeedItem> response = feedPage.map(item -> new MessageFeedItem(
+                item.id(),
+                item.content(),
+                new MessageFeedItem.AuthorInfo(item.authorId(), item.authorFullName(), item.authorUsername()),
+                item.status(),
+                item.isSpam(),
+                new MessageFeedItem.VotesInfo(item.upvoteCount(), item.downvoteCount(), item.score()),
+                item.userVote(),
+                item.createdAt()));
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     ResponseEntity<MessageDetailResponse> getMessageById(@PathVariable Long id) {
         Long currentUserId = userContextUtils.getCurrentUserId();

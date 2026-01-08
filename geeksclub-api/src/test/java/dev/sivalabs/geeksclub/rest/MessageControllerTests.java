@@ -519,4 +519,70 @@ class MessageControllerTests extends BaseIntegrationTest {
         assertThat(response.votes().score()).isEqualTo(5);
         assertThat(response.votedAt()).isNotNull();
     }
+
+    @Test
+    void shouldSearchMessagesWithoutAuthentication() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages/search?q=Spring&page=0&size=20")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+        assertThat(response).contains("\"totalElements\"");
+    }
+
+    @Test
+    void shouldSearchMessagesWithAuthentication() {
+        String token = getUserAuthToken();
+
+        var response = restTestClient
+                .get()
+                .uri("/api/messages/search?q=Spring&page=0&size=20")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+        assertThat(response).contains("\"totalElements\"");
+    }
+
+    @Test
+    void shouldSearchMessagesWithPagination() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages/search?q=message&page=0&size=5")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+        assertThat(response).contains("\"size\":5");
+    }
+
+    @Test
+    void shouldLimitPageSizeForSearchMessages() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages/search?q=Spring&page=0&size=200")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"size\":100");
+    }
 }

@@ -120,6 +120,21 @@ public class MessageService {
             return messagePage.map(m -> null);
         }
 
+        return getMessageFeedItemVMS(currentUserId, messagePage);
+    }
+
+    public Page<MessageFeedItemVM> searchMessages(String query, int page, int size, Long currentUserId) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MessageEntity> messagePage = messageRepository.searchMessages(query, pageable);
+
+        if (messagePage.isEmpty()) {
+            return messagePage.map(m -> null);
+        }
+
+        return getMessageFeedItemVMS(currentUserId, messagePage);
+    }
+
+    private Page<MessageFeedItemVM> getMessageFeedItemVMS(Long currentUserId, Page<MessageEntity> messagePage) {
         List<Long> messageIds =
                 messagePage.getContent().stream().map(MessageEntity::getId).collect(Collectors.toList());
 

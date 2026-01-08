@@ -52,4 +52,12 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
             ORDER BY m.createdAt DESC
             """)
     Page<MessageEntity> findByUsernameOrderByCreatedAtDesc(String username, Pageable pageable);
+
+    @Query("""
+            SELECT m FROM MessageEntity m
+            WHERE lower(m.content) LIKE lower(concat('%', :query, '%'))
+            AND m.status = 'PUBLISHED'
+            ORDER BY m.createdAt DESC
+            """)
+    Page<MessageEntity> searchMessages(String query, Pageable pageable);
 }
