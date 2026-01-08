@@ -322,4 +322,83 @@ class MessageControllerTests extends BaseIntegrationTest {
                 .expectStatus()
                 .isEqualTo(HttpStatus.NOT_FOUND);
     }
+
+    @Test
+    void shouldGetUserMessagesWithoutAuthentication() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?user=siva&page=0&size=20")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+        assertThat(response).contains("\"totalElements\"");
+        assertThat(response).contains("\"username\":\"siva\"");
+    }
+
+    @Test
+    void shouldGetUserMessagesWithAuthentication() {
+        String token = getUserAuthToken();
+
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?user=siva&page=0&size=20")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+        assertThat(response).contains("\"totalElements\"");
+        assertThat(response).contains("\"username\":\"siva\"");
+        assertThat(response).contains("\"fullName\":\"Siva Katamreddy\"");
+    }
+
+    @Test
+    void shouldGetUserMessagesWithPagination() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?user=siva&page=0&size=5")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"content\"");
+        assertThat(response).contains("\"size\":5");
+    }
+
+    @Test
+    void shouldReturn404ForNonExistentUser() {
+        restTestClient
+                .get()
+                .uri("/api/messages?user=nonexistentuser")
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldLimitPageSizeForUserMessages() {
+        var response = restTestClient
+                .get()
+                .uri("/api/messages?user=siva&page=0&size=200")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(String.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response).contains("\"size\":100");
+    }
 }

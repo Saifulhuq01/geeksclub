@@ -7,6 +7,7 @@ public record MessageFeedItemVM(
         Long id,
         String content,
         Long authorId,
+        String authorFullName,
         String authorUsername,
         MessageStatus status,
         boolean isSpam,

@@ -61,6 +61,7 @@ class MessageController {
 
     @GetMapping("")
     ResponseEntity<Page<MessageFeedItem>> getMessageFeed(
+            @RequestParam(required = false) String user,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "recent") String sort) {
@@ -70,15 +71,22 @@ class MessageController {
             size = 100;
         }
 
-        SortBy sortBy = SortBy.fromString(sort);
         Long currentUserId = userContextUtils.getCurrentUserId();
+        Page<MessageFeedItemVM> feedPage;
 
-        Page<MessageFeedItemVM> feedPage = messageService.getMessageFeed(page, size, sortBy, currentUserId);
+        if (user != null && !user.isBlank()) {
+            // Get messages by specific user
+            feedPage = messageService.getUserMessages(user, page, size, currentUserId);
+        } else {
+            // Get general message feed
+            SortBy sortBy = SortBy.fromString(sort);
+            feedPage = messageService.getMessageFeed(page, size, sortBy, currentUserId);
+        }
 
         Page<MessageFeedItem> response = feedPage.map(item -> new MessageFeedItem(
                 item.id(),
                 item.content(),
-                new MessageFeedItem.AuthorInfo(item.authorId(), item.authorUsername()),
+                new MessageFeedItem.AuthorInfo(item.authorId(), item.authorFullName(), item.authorUsername()),
                 item.status(),
                 item.isSpam(),
                 new MessageFeedItem.VotesInfo(item.upvoteCount(), item.downvoteCount(), item.score()),

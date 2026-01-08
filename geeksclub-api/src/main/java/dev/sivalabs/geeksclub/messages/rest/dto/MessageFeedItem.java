@@ -13,7 +13,7 @@ public record MessageFeedItem(
         String userVote,
         Instant createdAt) {
 
-    public record AuthorInfo(Long id, String username) {}
+    public record AuthorInfo(Long id, String fullName, String username) {}
 
     public record VotesInfo(int upvoteCount, int downvoteCount, int score) {}
 }

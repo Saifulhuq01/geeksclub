@@ -87,6 +87,59 @@ public class MessageService {
                     message.getId(),
                     message.getContent(),
                     userInfo != null ? userInfo.id() : null,
+                    userInfo != null ? userInfo.fullName() : null,
+                    userInfo != null ? userInfo.username() : null,
+                    message.getStatus(),
+                    message.isSpam(),
+                    voteCounts.upvoteCount(),
+                    voteCounts.downvoteCount(),
+                    voteCounts.upvoteCount() - voteCounts.downvoteCount(),
+                    userVote != null ? userVote.name() : null,
+                    message.getCreatedAt());
+        });
+    }
+
+    public Page<MessageFeedItemVM> getUserMessages(String username, int page, int size, Long currentUserId) {
+        // Verify user exists
+        userRepository
+                .findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MessageEntity> messagePage = messageRepository.findByUsernameOrderByCreatedAtDesc(username, pageable);
+
+        if (messagePage.isEmpty()) {
+            return messagePage.map(m -> null);
+        }
+
+        List<Long> messageIds =
+                messagePage.getContent().stream().map(MessageEntity::getId).collect(Collectors.toList());
+
+        // Get vote counts for all messages
+        Map<Long, VoteCounts> voteCountsMap = getVoteCountsMap(messageIds);
+
+        // Get user votes if authenticated
+        Map<Long, VoteType> userVotesMap = new HashMap<>();
+        if (currentUserId != null) {
+            userVotesMap = getUserVotesMap(messageIds, currentUserId);
+        }
+
+        // Get user info for all message authors
+        Set<Long> userIds =
+                messagePage.getContent().stream().map(MessageEntity::getUserId).collect(Collectors.toSet());
+        Map<Long, UserInfo> userInfoMap = getUserInfoMap(userIds);
+
+        Map<Long, VoteType> finalUserVotesMap = userVotesMap;
+        return messagePage.map(message -> {
+            VoteCounts voteCounts = voteCountsMap.getOrDefault(message.getId(), new VoteCounts(0, 0));
+            VoteType userVote = finalUserVotesMap.get(message.getId());
+            UserInfo userInfo = userInfoMap.get(message.getUserId());
+
+            return new MessageFeedItemVM(
+                    message.getId(),
+                    message.getContent(),
+                    userInfo != null ? userInfo.id() : null,
+                    userInfo != null ? userInfo.fullName() : null,
                     userInfo != null ? userInfo.username() : null,
                     message.getStatus(),
                     message.isSpam(),
@@ -157,10 +210,11 @@ public class MessageService {
 
     private Map<Long, UserInfo> getUserInfoMap(Set<Long> userIds) {
         return userRepository.findAllById(userIds).stream()
-                .collect(Collectors.toMap(BaseEntity::getId, user -> new UserInfo(user.getId(), user.getUsername())));
+                .collect(Collectors.toMap(
+                        BaseEntity::getId, user -> new UserInfo(user.getId(), user.getFullName(), user.getUsername())));
     }
 
     record VoteCounts(int upvoteCount, int downvoteCount) {}
 
-    record UserInfo(Long id, String username) {}
+    record UserInfo(Long id, String fullName, String username) {}
 }

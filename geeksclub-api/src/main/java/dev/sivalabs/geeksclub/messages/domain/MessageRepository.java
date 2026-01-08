@@ -43,4 +43,12 @@ interface MessageRepository extends JpaRepository<MessageEntity, Long> {
             WHERE m.status = 'PUBLISHED'
             """, nativeQuery = true)
     Page<MessageEntity> findAllPublishedOrderByTrending(Pageable pageable);
+
+    @Query("""
+            SELECT m FROM MessageEntity m
+            JOIN UserEntity u ON m.userId = u.id
+            WHERE u.username = :username AND m.status = 'PUBLISHED'
+            ORDER BY m.createdAt DESC
+            """)
+    Page<MessageEntity> findByUsernameOrderByCreatedAtDesc(String username, Pageable pageable);
 }
