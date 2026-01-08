@@ -8,6 +8,7 @@ import dev.sivalabs.geeksclub.domain.dto.MessageDetailVM;
 import dev.sivalabs.geeksclub.domain.dto.MessageFeedItemVM;
 import dev.sivalabs.geeksclub.domain.dto.RemoveVoteResult;
 import dev.sivalabs.geeksclub.domain.dto.SortBy;
+import dev.sivalabs.geeksclub.domain.dto.UserVoteResult;
 import dev.sivalabs.geeksclub.domain.dto.VoteResult;
 import dev.sivalabs.geeksclub.domain.service.MessageService;
 import dev.sivalabs.geeksclub.domain.service.UserService;
@@ -16,6 +17,7 @@ import dev.sivalabs.geeksclub.rest.dto.CreateMessageResponse;
 import dev.sivalabs.geeksclub.rest.dto.MessageDetailResponse;
 import dev.sivalabs.geeksclub.rest.dto.MessageFeedItem;
 import dev.sivalabs.geeksclub.rest.dto.RemoveVoteResponse;
+import dev.sivalabs.geeksclub.rest.dto.UserVoteResponse;
 import dev.sivalabs.geeksclub.rest.dto.VoteRequest;
 import dev.sivalabs.geeksclub.rest.dto.VoteResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -130,6 +132,15 @@ class MessageController {
         boolean isAdmin = userContextUtils.isCurrentUserAdmin();
         messageService.deleteMessage(id, currentUser.id(), isAdmin);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{messageId}/vote")
+    @SecurityRequirement(name = "Bearer")
+    public ResponseEntity<UserVoteResponse> getUserVote(@PathVariable Long messageId) {
+        var user = userContextUtils.getCurrentUserOrThrow();
+        UserVoteResult result = messageService.getUserVote(messageId, user.id());
+        UserVoteResponse response = new UserVoteResponse(result.messageId(), result.voteType(), result.votedAt());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{messageId}/vote")

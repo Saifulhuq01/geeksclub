@@ -1,6 +1,14 @@
 package dev.sivalabs.geeksclub.domain.service;
 
-import dev.sivalabs.geeksclub.domain.dto.*;
+import dev.sivalabs.geeksclub.domain.dto.CreateMessageCmd;
+import dev.sivalabs.geeksclub.domain.dto.MessageDetailVM;
+import dev.sivalabs.geeksclub.domain.dto.MessageFeedItemVM;
+import dev.sivalabs.geeksclub.domain.dto.MessageVM;
+import dev.sivalabs.geeksclub.domain.dto.RemoveVoteResult;
+import dev.sivalabs.geeksclub.domain.dto.SortBy;
+import dev.sivalabs.geeksclub.domain.dto.UserVoteResult;
+import dev.sivalabs.geeksclub.domain.dto.VoteResult;
+import dev.sivalabs.geeksclub.domain.dto.VoteType;
 import dev.sivalabs.geeksclub.domain.entity.BaseEntity;
 import dev.sivalabs.geeksclub.domain.entity.MessageEntity;
 import dev.sivalabs.geeksclub.domain.entity.UserEntity;
@@ -240,6 +248,17 @@ public class MessageService {
         int score = upvoteCount - downvoteCount;
 
         return new VoteResult(messageId, voteType, upvoteCount, downvoteCount, score, vote.getUpdatedAt());
+    }
+
+    public UserVoteResult getUserVote(Long messageId, Long userId) {
+        messageRepository
+                .findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message with id " + messageId + " not found"));
+
+        return voteRepository
+                .findByMessageIdAndUserId(messageId, userId)
+                .map(v -> new UserVoteResult(messageId, v.getVoteType(), v.getUpdatedAt()))
+                .orElse(new UserVoteResult(messageId, null, null));
     }
 
     @Transactional
