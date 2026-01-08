@@ -5,9 +5,11 @@ import static org.springframework.http.HttpStatus.CREATED;
 import dev.sivalabs.geeksclub.messages.domain.MessageService;
 import dev.sivalabs.geeksclub.messages.domain.SortBy;
 import dev.sivalabs.geeksclub.messages.domain.dto.CreateMessageCmd;
+import dev.sivalabs.geeksclub.messages.domain.dto.MessageDetailVM;
 import dev.sivalabs.geeksclub.messages.domain.dto.MessageFeedItemVM;
 import dev.sivalabs.geeksclub.messages.rest.dto.CreateMessageRequest;
 import dev.sivalabs.geeksclub.messages.rest.dto.CreateMessageResponse;
+import dev.sivalabs.geeksclub.messages.rest.dto.MessageDetailResponse;
 import dev.sivalabs.geeksclub.messages.rest.dto.MessageFeedItem;
 import dev.sivalabs.geeksclub.users.UserContextUtils;
 import dev.sivalabs.geeksclub.users.domain.UserService;
@@ -82,6 +84,27 @@ class MessageController {
                 new MessageFeedItem.VotesInfo(item.upvoteCount(), item.downvoteCount(), item.score()),
                 item.userVote(),
                 item.createdAt()));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    ResponseEntity<MessageDetailResponse> getMessageById(@PathVariable Long id) {
+        Long currentUserId = userContextUtils.getCurrentUserId();
+        MessageDetailVM message = messageService.getMessage(id, currentUserId);
+
+        var response = new MessageDetailResponse(
+                message.id(),
+                message.content(),
+                new MessageDetailResponse.AuthorInfo(
+                        message.authorId(), message.authorFullName(), message.authorUsername()),
+                message.status(),
+                message.isSpam(),
+                message.spamConfidence(),
+                new MessageDetailResponse.VotesInfo(message.upvoteCount(), message.downvoteCount(), message.score()),
+                message.userVote(),
+                message.createdAt(),
+                message.updatedAt());
 
         return ResponseEntity.ok(response);
     }

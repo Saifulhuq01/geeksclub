@@ -1,10 +1,13 @@
 package dev.sivalabs.geeksclub.messages.domain;
 
 import dev.sivalabs.geeksclub.messages.domain.dto.CreateMessageCmd;
+import dev.sivalabs.geeksclub.messages.domain.dto.MessageDetailVM;
 import dev.sivalabs.geeksclub.messages.domain.dto.MessageFeedItemVM;
 import dev.sivalabs.geeksclub.messages.domain.dto.MessageVM;
 import dev.sivalabs.geeksclub.shared.entity.BaseEntity;
+import dev.sivalabs.geeksclub.shared.exception.ResourceNotFoundException;
 import dev.sivalabs.geeksclub.shared.utils.IdGenerator;
+import dev.sivalabs.geeksclub.users.domain.UserEntity;
 import dev.sivalabs.geeksclub.users.domain.UserRepository;
 import dev.sivalabs.geeksclub.votes.domain.VoteEntity;
 import dev.sivalabs.geeksclub.votes.domain.VoteRepository;
@@ -95,6 +98,48 @@ public class MessageService {
         });
     }
 
+    public MessageDetailVM getMessage(Long messageId, Long currentUserId) {
+        MessageEntity message = messageRepository
+                .findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + messageId));
+
+        // Get vote counts for this message
+        List<VoteRepository.VoteCount> voteCounts = voteRepository.getVoteCountsByMessageIds(List.of(messageId));
+        VoteCounts counts = voteCounts.isEmpty()
+                ? new VoteCounts(0, 0)
+                : new VoteCounts(
+                        voteCounts.get(0).getUpvoteCount().intValue(),
+                        voteCounts.get(0).getDownvoteCount().intValue());
+
+        // Get user vote if authenticated
+        VoteType userVote = null;
+        if (currentUserId != null) {
+            Optional<VoteEntity> vote = voteRepository.findByMessageIdAndUserId(messageId, currentUserId);
+            userVote = vote.map(VoteEntity::getVoteType).orElse(null);
+        }
+
+        // Get author information
+        UserEntity author = userRepository
+                .findById(message.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + message.getUserId()));
+
+        return new MessageDetailVM(
+                message.getId(),
+                message.getContent(),
+                author.getId(),
+                author.getUsername(),
+                author.getFullName(),
+                message.getStatus(),
+                message.isSpam(),
+                message.getSpamConfidence(),
+                counts.upvoteCount(),
+                counts.downvoteCount(),
+                counts.upvoteCount() - counts.downvoteCount(),
+                userVote != null ? userVote.name() : null,
+                message.getCreatedAt(),
+                message.getUpdatedAt());
+    }
+
     private Map<Long, VoteCounts> getVoteCountsMap(List<Long> messageIds) {
         List<VoteRepository.VoteCount> voteCounts = voteRepository.getVoteCountsByMessageIds(messageIds);
         return voteCounts.stream()
@@ -112,8 +157,7 @@ public class MessageService {
 
     private Map<Long, UserInfo> getUserInfoMap(Set<Long> userIds) {
         return userRepository.findAllById(userIds).stream()
-                .collect(
-                        Collectors.toMap(BaseEntity::getId, user -> new UserInfo(user.getId(), user.getUsername())));
+                .collect(Collectors.toMap(BaseEntity::getId, user -> new UserInfo(user.getId(), user.getUsername())));
     }
 
     record VoteCounts(int upvoteCount, int downvoteCount) {}

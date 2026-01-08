@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.sivalabs.geeksclub.BaseIntegrationTest;
 import dev.sivalabs.geeksclub.messages.rest.dto.CreateMessageResponse;
+import dev.sivalabs.geeksclub.messages.rest.dto.MessageDetailResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -234,5 +235,91 @@ class MessageControllerTests extends BaseIntegrationTest {
 
         assertThat(response).isNotNull();
         assertThat(response).contains("\"size\":100");
+    }
+
+    @Test
+    void shouldGetMessageByIdWithoutAuthentication() {
+        MessageDetailResponse response = restTestClient
+                .get()
+                .uri("/api/messages/1")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(MessageDetailResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.content()).contains("Spring AI");
+        assertThat(response.author()).isNotNull();
+        assertThat(response.author().username()).isEqualTo("siva");
+        assertThat(response.author().fullName()).isEqualTo("Siva Katamreddy");
+        assertThat(response.status().name()).isEqualTo("PUBLISHED");
+        assertThat(response.isSpam()).isFalse();
+        assertThat(response.spamConfidence()).isNotNull();
+        assertThat(response.votes()).isNotNull();
+        assertThat(response.votes().upvoteCount()).isEqualTo(8);
+        assertThat(response.votes().downvoteCount()).isZero();
+        assertThat(response.votes().score()).isEqualTo(8);
+        assertThat(response.userVote()).isNull();
+        assertThat(response.createdAt()).isNotNull();
+        assertThat(response.updatedAt()).isNotNull();
+    }
+
+    @Test
+    void shouldGetMessageByIdWithAuthentication() {
+        String token = getUserAuthToken();
+
+        MessageDetailResponse response = restTestClient
+                .get()
+                .uri("/api/messages/1")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(MessageDetailResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.content()).contains("Spring AI");
+        assertThat(response.author()).isNotNull();
+        assertThat(response.author().username()).isEqualTo("siva");
+        assertThat(response.votes()).isNotNull();
+        assertThat(response.votes().upvoteCount()).isEqualTo(8);
+        assertThat(response.votes().score()).isEqualTo(8);
+        // User with id 1 (siva) is the author, so no vote
+        assertThat(response.userVote()).isNull();
+    }
+
+    @Test
+    void shouldGetMessageByIdWithUserVote() {
+        String token = getUserAuthToken();
+
+        // User 1 (siva) has an upvote on message 2
+        MessageDetailResponse response = restTestClient
+                .get()
+                .uri("/api/messages/2")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(MessageDetailResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(2L);
+        assertThat(response.userVote()).isEqualTo("UP");
+        assertThat(response.votes().upvoteCount()).isEqualTo(5);
+    }
+
+    @Test
+    void shouldReturn404ForNonExistentMessage() {
+        restTestClient
+                .get()
+                .uri("/api/messages/99999")
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.NOT_FOUND);
     }
 }
