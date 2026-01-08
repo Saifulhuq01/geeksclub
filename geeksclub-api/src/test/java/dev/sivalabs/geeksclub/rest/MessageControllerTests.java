@@ -519,5 +519,4 @@ class MessageControllerTests extends BaseIntegrationTest {
         assertThat(response.votes().score()).isEqualTo(5);
         assertThat(response.votedAt()).isNotNull();
     }
-
 }

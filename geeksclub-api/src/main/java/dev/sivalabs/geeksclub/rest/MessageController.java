@@ -2,15 +2,28 @@ package dev.sivalabs.geeksclub.rest;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
-import dev.sivalabs.geeksclub.domain.dto.*;
+import dev.sivalabs.geeksclub.domain.dto.AuthenticatedUser;
+import dev.sivalabs.geeksclub.domain.dto.CreateMessageCmd;
+import dev.sivalabs.geeksclub.domain.dto.MessageDetailVM;
+import dev.sivalabs.geeksclub.domain.dto.MessageFeedItemVM;
+import dev.sivalabs.geeksclub.domain.dto.RemoveVoteResult;
+import dev.sivalabs.geeksclub.domain.dto.SortBy;
+import dev.sivalabs.geeksclub.domain.dto.VoteResult;
 import dev.sivalabs.geeksclub.domain.service.MessageService;
 import dev.sivalabs.geeksclub.domain.service.UserService;
-import dev.sivalabs.geeksclub.rest.dto.*;
+import dev.sivalabs.geeksclub.rest.dto.CreateMessageRequest;
+import dev.sivalabs.geeksclub.rest.dto.CreateMessageResponse;
+import dev.sivalabs.geeksclub.rest.dto.MessageDetailResponse;
+import dev.sivalabs.geeksclub.rest.dto.MessageFeedItem;
+import dev.sivalabs.geeksclub.rest.dto.RemoveVoteResponse;
+import dev.sivalabs.geeksclub.rest.dto.VoteRequest;
+import dev.sivalabs.geeksclub.rest.dto.VoteResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,19 +38,6 @@ class MessageController {
         this.messageService = messageService;
         this.userService = userService;
         this.userContextUtils = userContextUtils;
-    }
-
-    @PostMapping("/{messageId}/vote")
-    @SecurityRequirement(name = "Bearer")
-    public ResponseEntity<VoteResponse> vote(@PathVariable Long messageId, @RequestBody @Valid VoteRequest request) {
-        var user = userContextUtils.getCurrentUserOrThrow();
-        VoteResult result = messageService.vote(messageId, user.id(), request.voteType());
-        VoteResponse response = new VoteResponse(
-                result.messageId(),
-                result.voteType(),
-                new VoteResponse.Votes(result.upvoteCount(), result.downvoteCount(), result.score()),
-                result.votedAt());
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping("")
@@ -130,5 +130,30 @@ class MessageController {
         boolean isAdmin = userContextUtils.isCurrentUserAdmin();
         messageService.deleteMessage(id, currentUser.id(), isAdmin);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{messageId}/vote")
+    @SecurityRequirement(name = "Bearer")
+    public ResponseEntity<VoteResponse> vote(@PathVariable Long messageId, @RequestBody @Valid VoteRequest request) {
+        var user = userContextUtils.getCurrentUserOrThrow();
+        VoteResult result = messageService.vote(messageId, user.id(), request.voteType());
+        VoteResponse response = new VoteResponse(
+                result.messageId(),
+                result.voteType(),
+                new VoteResponse.Votes(result.upvoteCount(), result.downvoteCount(), result.score()),
+                result.votedAt());
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{messageId}/vote")
+    @SecurityRequirement(name = "Bearer")
+    public ResponseEntity<RemoveVoteResponse> removeVote(
+            @PathVariable Long messageId, @AuthenticationPrincipal AuthenticatedUser user) {
+        RemoveVoteResult result = messageService.removeVote(messageId, user.id());
+        RemoveVoteResponse response = new RemoveVoteResponse(
+                result.messageId(),
+                new VoteResponse.Votes(result.upvoteCount(), result.downvoteCount(), result.score()),
+                result.message());
+        return ResponseEntity.ok(response);
     }
 }

@@ -40,40 +40,6 @@ public class MessageService {
     }
 
     @Transactional
-    public VoteResult vote(Long messageId, Long userId, VoteType voteType) {
-        userRepository
-                .findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " not found"));
-        MessageEntity message = messageRepository
-                .findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Message with id " + messageId + " not found"));
-
-        if (message.getUserId().equals(userId)) {
-            throw new ConflictException("You cannot vote for your own message");
-        }
-
-        Optional<VoteEntity> existingVoteOptional = voteRepository.findByMessageIdAndUserId(messageId, userId);
-
-        VoteEntity vote;
-        if (existingVoteOptional.isPresent()) {
-            vote = existingVoteOptional.get();
-            if (vote.getVoteType() != voteType) {
-                vote.updateVoteType(voteType);
-                vote = voteRepository.save(vote);
-            }
-        } else {
-            vote = new VoteEntity(IdGenerator.generateLong(), userId, messageId, voteType);
-            vote = voteRepository.save(vote);
-        }
-
-        int upvoteCount = voteRepository.countUpVotes(messageId);
-        int downvoteCount = voteRepository.countDownVotes(messageId);
-        int score = upvoteCount - downvoteCount;
-
-        return new VoteResult(messageId, voteType, upvoteCount, downvoteCount, score, vote.getUpdatedAt());
-    }
-
-    @Transactional
     public MessageVM createMessage(CreateMessageCmd cmd) {
         var message = new MessageEntity(IdGenerator.generateLong(), cmd.userId(), cmd.content());
         var savedMessage = messageRepository.save(message);
@@ -240,6 +206,60 @@ public class MessageService {
                 userVote != null ? userVote.name() : null,
                 message.getCreatedAt(),
                 message.getUpdatedAt());
+    }
+
+    @Transactional
+    public VoteResult vote(Long messageId, Long userId, VoteType voteType) {
+        userRepository
+                .findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " not found"));
+        MessageEntity message = messageRepository
+                .findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message with id " + messageId + " not found"));
+
+        if (message.getUserId().equals(userId)) {
+            throw new ConflictException("You cannot vote for your own message");
+        }
+
+        Optional<VoteEntity> existingVoteOptional = voteRepository.findByMessageIdAndUserId(messageId, userId);
+
+        VoteEntity vote;
+        if (existingVoteOptional.isPresent()) {
+            vote = existingVoteOptional.get();
+            if (vote.getVoteType() != voteType) {
+                vote.updateVoteType(voteType);
+                vote = voteRepository.save(vote);
+            }
+        } else {
+            vote = new VoteEntity(IdGenerator.generateLong(), userId, messageId, voteType);
+            vote = voteRepository.save(vote);
+        }
+
+        int upvoteCount = voteRepository.countUpVotes(messageId);
+        int downvoteCount = voteRepository.countDownVotes(messageId);
+        int score = upvoteCount - downvoteCount;
+
+        return new VoteResult(messageId, voteType, upvoteCount, downvoteCount, score, vote.getUpdatedAt());
+    }
+
+    @Transactional
+    public RemoveVoteResult removeVote(Long messageId, Long userId) {
+        messageRepository
+                .findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message with id " + messageId + " not found"));
+
+        VoteEntity vote = voteRepository
+                .findByMessageIdAndUserId(messageId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Vote not found for message " + messageId + " by user " + userId));
+
+        voteRepository.delete(vote);
+
+        int upvoteCount = voteRepository.countUpVotes(messageId);
+        int downvoteCount = voteRepository.countDownVotes(messageId);
+        int score = upvoteCount - downvoteCount;
+
+        return new RemoveVoteResult(messageId, upvoteCount, downvoteCount, score, "Vote removed successfully");
     }
 
     private Map<Long, VoteCounts> getVoteCountsMap(List<Long> messageIds) {
