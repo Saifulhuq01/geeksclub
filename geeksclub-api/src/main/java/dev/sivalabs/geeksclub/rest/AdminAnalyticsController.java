@@ -1,9 +1,11 @@
 package dev.sivalabs.geeksclub.rest;
 
 import dev.sivalabs.geeksclub.domain.dto.DailyStatisticsVM;
+import dev.sivalabs.geeksclub.domain.dto.MostActiveUsersVM;
 import dev.sivalabs.geeksclub.domain.dto.SystemOverviewVM;
 import dev.sivalabs.geeksclub.domain.service.AnalyticsService;
 import dev.sivalabs.geeksclub.rest.dto.DailyStatisticsResponse;
+import dev.sivalabs.geeksclub.rest.dto.MostActiveUsersResponse;
 import dev.sivalabs.geeksclub.rest.dto.SystemOverviewResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -61,6 +63,30 @@ class AdminAnalyticsController {
                 stats.period().days());
 
         DailyStatisticsResponse response = new DailyStatisticsResponse(statistics, period);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/users/active")
+    @SecurityRequirement(name = "Bearer")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    ResponseEntity<MostActiveUsersResponse> getMostActiveUsers(@RequestParam(defaultValue = "20") int limit) {
+        MostActiveUsersVM activeUsers = analyticsService.getMostActiveUsers(limit);
+
+        var users = activeUsers.users().stream()
+                .map(u -> new MostActiveUsersResponse.ActiveUser(
+                        u.userId(),
+                        u.fullName(),
+                        u.username(),
+                        u.email(),
+                        u.messageCount(),
+                        u.voteCount(),
+                        u.totalActivity(),
+                        u.lastActivityAt(),
+                        u.joinedAt()))
+                .toList();
+
+        MostActiveUsersResponse response = new MostActiveUsersResponse(users, activeUsers.limit());
 
         return ResponseEntity.ok(response);
     }

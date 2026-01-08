@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.sivalabs.geeksclub.BaseIntegrationTest;
 import dev.sivalabs.geeksclub.rest.dto.DailyStatisticsResponse;
+import dev.sivalabs.geeksclub.rest.dto.MostActiveUsersResponse;
 import dev.sivalabs.geeksclub.rest.dto.SystemOverviewResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -117,6 +118,80 @@ class AdminAnalyticsControllerTests extends BaseIntegrationTest {
         restTestClient
                 .get()
                 .uri("/api/admin/analytics/daily?days=7")
+                .header("Authorization", "Bearer " + userToken)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void shouldGetMostActiveUsersWhenAdmin() {
+        String adminToken = getAdminAuthToken();
+
+        MostActiveUsersResponse response = restTestClient
+                .get()
+                .uri("/api/admin/analytics/users/active?limit=5")
+                .header("Authorization", "Bearer " + adminToken)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(MostActiveUsersResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.users()).isNotNull();
+        assertThat(response.users()).hasSizeLessThanOrEqualTo(5);
+        assertThat(response.limit()).isEqualTo(5);
+
+        if (!response.users().isEmpty()) {
+            MostActiveUsersResponse.ActiveUser firstUser = response.users().get(0);
+            assertThat(firstUser.userId()).isNotNull();
+            assertThat(firstUser.username()).isNotBlank();
+            assertThat(firstUser.email()).isNotBlank();
+            assertThat(firstUser.totalActivity()).isGreaterThanOrEqualTo(0);
+            assertThat(firstUser.messageCount()).isGreaterThanOrEqualTo(0);
+            assertThat(firstUser.voteCount()).isGreaterThanOrEqualTo(0);
+            assertThat(firstUser.lastActivityAt()).isNotNull();
+            assertThat(firstUser.joinedAt()).isNotNull();
+        }
+    }
+
+    @Test
+    void shouldGetMostActiveUsersWithDefaultLimitWhenAdmin() {
+        String adminToken = getAdminAuthToken();
+
+        MostActiveUsersResponse response = restTestClient
+                .get()
+                .uri("/api/admin/analytics/users/active")
+                .header("Authorization", "Bearer " + adminToken)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(MostActiveUsersResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.users()).isNotNull();
+        assertThat(response.limit()).isEqualTo(20);
+    }
+
+    @Test
+    void shouldNotGetMostActiveUsersWithoutAuthentication() {
+        restTestClient
+                .get()
+                .uri("/api/admin/analytics/users/active?limit=5")
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void shouldNotGetMostActiveUsersWhenNotAdmin() {
+        String userToken = getUserAuthToken();
+
+        restTestClient
+                .get()
+                .uri("/api/admin/analytics/users/active?limit=5")
                 .header("Authorization", "Bearer " + userToken)
                 .exchange()
                 .expectStatus()

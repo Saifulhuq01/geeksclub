@@ -1,7 +1,9 @@
 package dev.sivalabs.geeksclub.domain.service;
 
+import dev.sivalabs.geeksclub.domain.dto.ActiveUserVM;
 import dev.sivalabs.geeksclub.domain.dto.DailyStatistic;
 import dev.sivalabs.geeksclub.domain.dto.DailyStatisticsVM;
+import dev.sivalabs.geeksclub.domain.dto.MostActiveUsersVM;
 import dev.sivalabs.geeksclub.domain.dto.SystemOverviewVM;
 import dev.sivalabs.geeksclub.domain.repo.MessageRepository;
 import dev.sivalabs.geeksclub.domain.repo.UserRepository;
@@ -107,5 +109,24 @@ public class AnalyticsService {
 
         DailyStatisticsVM.Period period = new DailyStatisticsVM.Period(startDate, endDate, days);
         return new DailyStatisticsVM(statistics, period);
+    }
+
+    public MostActiveUsersVM getMostActiveUsers(int limit) {
+        List<UserRepository.ActiveUserStats> activeUserStats = userRepository.getMostActiveUsers(limit);
+
+        List<ActiveUserVM> users = activeUserStats.stream()
+                .map(stat -> new ActiveUserVM(
+                        stat.getUserId(),
+                        stat.getFullName(),
+                        stat.getUsername(),
+                        stat.getEmail(),
+                        stat.getMessageCount(),
+                        stat.getVoteCount(),
+                        stat.getTotalActivity(),
+                        stat.getLastActivityAt(),
+                        stat.getJoinedAt()))
+                .toList();
+
+        return new MostActiveUsersVM(users, limit);
     }
 }
