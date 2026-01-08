@@ -116,4 +116,13 @@ class MessageController {
 
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{id}")
+    @SecurityRequirement(name = "Bearer")
+    ResponseEntity<Void> deleteMessage(@PathVariable Long id) {
+        var currentUser = userContextUtils.getCurrentUserOrThrow();
+        boolean isAdmin = userContextUtils.isCurrentUserAdmin();
+        messageService.deleteMessage(id, currentUser.id(), isAdmin);
+        return ResponseEntity.noContent().build();
+    }
 }

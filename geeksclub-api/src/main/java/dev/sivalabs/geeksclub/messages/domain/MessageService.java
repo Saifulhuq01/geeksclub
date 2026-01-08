@@ -151,6 +151,21 @@ public class MessageService {
         });
     }
 
+    @Transactional
+    public void deleteMessage(Long messageId, Long currentUserId, boolean isAdmin) {
+        MessageEntity message = messageRepository
+                .findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + messageId));
+
+        // Check if user is authorized to delete (must be author or admin)
+        if (!isAdmin && !message.getUserId().equals(currentUserId)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You are not authorized to delete this message");
+        }
+
+        messageRepository.delete(message);
+    }
+
     public MessageDetailVM getMessage(Long messageId, Long currentUserId) {
         MessageEntity message = messageRepository
                 .findById(messageId)

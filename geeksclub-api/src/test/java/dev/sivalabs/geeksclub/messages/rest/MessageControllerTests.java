@@ -401,4 +401,92 @@ class MessageControllerTests extends BaseIntegrationTest {
         assertThat(response).isNotNull();
         assertThat(response).contains("\"size\":100");
     }
+
+    @Test
+    void shouldDeleteMessageSuccessfullyWhenUserIsAuthor() {
+        String token = getUserAuthToken();
+
+        // Create a message first
+        CreateMessageResponse createdMessage = restTestClient
+                .post()
+                .uri("/api/messages")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "content": "This message will be deleted"
+                        }
+                        """)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .returnResult(CreateMessageResponse.class)
+                .getResponseBody();
+
+        // Delete the message
+        restTestClient
+                .delete()
+                .uri("/api/messages/" + createdMessage.id())
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus()
+                .isNoContent();
+
+        // Verify message is deleted
+        restTestClient
+                .get()
+                .uri("/api/messages/" + createdMessage.id())
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldDeleteMessageSuccessfullyWhenUserIsAdmin() {
+        String adminToken = getAdminAuthToken();
+
+        // Admin deletes a message created by another user (message 2 created by user 2)
+        restTestClient
+                .delete()
+                .uri("/api/messages/2")
+                .header("Authorization", "Bearer " + adminToken)
+                .exchange()
+                .expectStatus()
+                .isNoContent();
+
+        // Verify message is deleted
+        restTestClient.get().uri("/api/messages/2").exchange().expectStatus().isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldNotDeleteMessageWithoutAuthentication() {
+        restTestClient.delete().uri("/api/messages/1").exchange().expectStatus().isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void shouldNotDeleteMessageWhenUserIsNotAuthorOrAdmin() {
+        String token = getUserAuthToken();
+
+        // User 1 (siva) tries to delete message 3 (created by user 3)
+        restTestClient
+                .delete()
+                .uri("/api/messages/3")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void shouldReturn404WhenDeletingNonExistentMessage() {
+        String token = getUserAuthToken();
+
+        restTestClient
+                .delete()
+                .uri("/api/messages/99999")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.NOT_FOUND);
+    }
 }
