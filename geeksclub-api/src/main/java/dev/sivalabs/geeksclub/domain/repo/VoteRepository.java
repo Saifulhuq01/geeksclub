@@ -1,6 +1,7 @@
 package dev.sivalabs.geeksclub.domain.repo;
 
 import dev.sivalabs.geeksclub.domain.entity.VoteEntity;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,6 +31,9 @@ public interface VoteRepository extends JpaRepository<VoteEntity, Long> {
 
     @Query("select count(v) from VoteEntity v where v.messageId = :messageId and v.voteType = 'DOWN'")
     int countDownVotes(@Param("messageId") Long messageId);
+
+    @Query("SELECT COUNT(v) FROM VoteEntity v WHERE v.createdAt >= :since")
+    long countVotesCreatedSince(@Param("since") Instant since);
 
     interface VoteCount {
         Long getMessageId();

@@ -1,10 +1,12 @@
 package dev.sivalabs.geeksclub.domain.repo;
 
 import dev.sivalabs.geeksclub.domain.entity.MessageEntity;
+import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
 
@@ -60,4 +62,10 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
             ORDER BY m.createdAt DESC
             """)
     Page<MessageEntity> searchMessages(String query, Pageable pageable);
+
+    @Query("SELECT COUNT(m) FROM MessageEntity m WHERE m.createdAt >= :since")
+    long countMessagesCreatedSince(@Param("since") Instant since);
+
+    @Query("SELECT COUNT(m) FROM MessageEntity m WHERE m.isSpam = true")
+    long countSpamMessages();
 }
