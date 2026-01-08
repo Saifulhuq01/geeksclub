@@ -365,7 +365,7 @@ GET /api/messages?page=0&size=20&sort=upvoted
         "downvoteCount": 3,
         "score": 142
       },
-      "userVote": "UPVOTE",
+      "userVote": "UP",
       "createdAt": "2025-01-05T16:30:00Z"
     },
     {
@@ -435,7 +435,7 @@ GET /api/messages?page=0&size=20&sort=upvoted
     "downvoteCount": 3,
     "score": 142
   },
-  "userVote": "UPVOTE",
+  "userVote": "UP",
   "createdAt": "2025-01-05T16:30:00Z",
   "updatedAt": "2025-01-05T16:30:00Z"
 }

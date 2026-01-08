@@ -25,6 +25,12 @@ public interface VoteRepository extends JpaRepository<VoteEntity, Long> {
 
     Optional<VoteEntity> findByMessageIdAndUserId(Long messageId, Long userId);
 
+    @Query("select count(v) from VoteEntity v where v.messageId = :messageId and v.voteType = 'UP'")
+    int countUpVotes(@Param("messageId") Long messageId);
+
+    @Query("select count(v) from VoteEntity v where v.messageId = :messageId and v.voteType = 'DOWN'")
+    int countDownVotes(@Param("messageId") Long messageId);
+
     interface VoteCount {
         Long getMessageId();
 

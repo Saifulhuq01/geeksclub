@@ -5,7 +5,9 @@ import dev.sivalabs.geeksclub.domain.entity.BaseEntity;
 import dev.sivalabs.geeksclub.domain.entity.MessageEntity;
 import dev.sivalabs.geeksclub.domain.entity.UserEntity;
 import dev.sivalabs.geeksclub.domain.entity.VoteEntity;
+import dev.sivalabs.geeksclub.domain.exception.ConflictException;
 import dev.sivalabs.geeksclub.domain.exception.ResourceNotFoundException;
+import dev.sivalabs.geeksclub.domain.exception.UserNotFoundException;
 import dev.sivalabs.geeksclub.domain.repo.MessageRepository;
 import dev.sivalabs.geeksclub.domain.repo.UserRepository;
 import dev.sivalabs.geeksclub.domain.repo.VoteRepository;
@@ -35,6 +37,40 @@ public class MessageService {
         this.messageEntityMapper = messageEntityMapper;
         this.voteRepository = voteRepository;
         this.userRepository = userRepository;
+    }
+
+    @Transactional
+    public VoteResult vote(Long messageId, Long userId, VoteType voteType) {
+        userRepository
+                .findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " not found"));
+        MessageEntity message = messageRepository
+                .findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message with id " + messageId + " not found"));
+
+        if (message.getUserId().equals(userId)) {
+            throw new ConflictException("You cannot vote for your own message");
+        }
+
+        Optional<VoteEntity> existingVoteOptional = voteRepository.findByMessageIdAndUserId(messageId, userId);
+
+        VoteEntity vote;
+        if (existingVoteOptional.isPresent()) {
+            vote = existingVoteOptional.get();
+            if (vote.getVoteType() != voteType) {
+                vote.updateVoteType(voteType);
+                vote = voteRepository.save(vote);
+            }
+        } else {
+            vote = new VoteEntity(IdGenerator.generateLong(), userId, messageId, voteType);
+            vote = voteRepository.save(vote);
+        }
+
+        int upvoteCount = voteRepository.countUpVotes(messageId);
+        int downvoteCount = voteRepository.countDownVotes(messageId);
+        int score = upvoteCount - downvoteCount;
+
+        return new VoteResult(messageId, voteType, upvoteCount, downvoteCount, score, vote.getUpdatedAt());
     }
 
     @Transactional

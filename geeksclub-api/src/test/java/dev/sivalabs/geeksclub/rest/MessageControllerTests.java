@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.sivalabs.geeksclub.BaseIntegrationTest;
 import dev.sivalabs.geeksclub.rest.dto.CreateMessageResponse;
 import dev.sivalabs.geeksclub.rest.dto.MessageDetailResponse;
+import dev.sivalabs.geeksclub.rest.dto.VoteResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -489,4 +490,34 @@ class MessageControllerTests extends BaseIntegrationTest {
                 .expectStatus()
                 .isEqualTo(HttpStatus.NOT_FOUND);
     }
+
+    @Test
+    void shouldVoteOnMessageSuccessfully() {
+        String token = getUserAuthToken();
+
+        VoteResponse response = restTestClient
+                .post()
+                .uri("/api/messages/2/vote")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "voteType": "UP"
+                        }
+                        """)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(VoteResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.messageId()).isEqualTo(2);
+        assertThat(response.voteType().name()).isEqualTo("UP");
+        assertThat(response.votes().upvoteCount()).isEqualTo(5);
+        assertThat(response.votes().downvoteCount()).isZero();
+        assertThat(response.votes().score()).isEqualTo(5);
+        assertThat(response.votedAt()).isNotNull();
+    }
+
 }
