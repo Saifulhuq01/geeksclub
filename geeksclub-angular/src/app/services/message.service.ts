@@ -86,4 +86,13 @@ export class MessageService {
   removeVote(messageId: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/messages/${messageId}/vote`);
   }
+
+  searchMessages(query: string, page: number = 0, size: number = 20): Observable<PagedResponse<Message>> {
+    let params = new HttpParams()
+      .set('q', query)
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    return this.http.get<PagedResponse<Message>>(`${this.apiUrl}/messages/search`, { params });
+  }
 }

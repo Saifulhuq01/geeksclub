@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { MessageService, Message, PagedResponse, SortOption } from '../../services/message.service';
 import { AuthService } from '../../services/auth.service';
 
@@ -14,6 +14,8 @@ import { AuthService } from '../../services/auth.service';
 export class HomeComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly messages = signal<Message[]>([]);
   readonly currentPage = signal<number>(0);
@@ -38,6 +40,9 @@ export class HomeComponent implements OnInit {
 
   readonly votingMessageId = signal<number | null>(null);
 
+  readonly searchQuery = signal<string>('');
+  readonly isSearchMode = signal<boolean>(false);
+
   readonly sortOptions: Array<{ value: SortOption; label: string }> = [
     { value: 'recent', label: 'Most Recent' },
     { value: 'upvoted', label: 'Most Upvoted' },
@@ -45,18 +50,25 @@ export class HomeComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.loadMessages();
+    this.route.queryParams.subscribe(params => {
+      const query = params['q'] || '';
+      this.searchQuery.set(query);
+      this.isSearchMode.set(!!query);
+      this.currentPage.set(0);
+      this.loadMessages();
+    });
   }
 
   loadMessages(): void {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.messageService.getMessages(
-      this.currentPage(),
-      this.pageSize(),
-      this.currentSort()
-    ).subscribe({
+    const query = this.searchQuery();
+    const observable = query
+      ? this.messageService.searchMessages(query, this.currentPage(), this.pageSize())
+      : this.messageService.getMessages(this.currentPage(), this.pageSize(), this.currentSort());
+
+    observable.subscribe({
       next: (response: PagedResponse<Message>) => {
         this.messages.set(response.content);
         this.totalPages.set(response.totalPages);
@@ -313,5 +325,26 @@ export class HomeComponent implements OnInit {
 
   isVoting(messageId: number): boolean {
     return this.votingMessageId() === messageId;
+  }
+
+  performSearch(query: string): void {
+    if (!query.trim()) {
+      this.clearSearch();
+      return;
+    }
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: query.trim() },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  clearSearch(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: null },
+      queryParamsHandling: 'merge'
+    });
   }
 }
