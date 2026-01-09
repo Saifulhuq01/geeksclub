@@ -1,15 +1,18 @@
 import { Component, ChangeDetectionStrategy, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MessageService, Message, PagedResponse, SortOption } from '../../services/message.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './home.component.html'
 })
 export class HomeComponent implements OnInit {
   private readonly messageService = inject(MessageService);
+  private readonly authService = inject(AuthService);
 
   readonly messages = signal<Message[]>([]);
   readonly currentPage = signal<number>(0);
@@ -19,6 +22,12 @@ export class HomeComponent implements OnInit {
   readonly currentSort = signal<SortOption>('recent');
   readonly isLoading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  readonly isAuthenticated = this.authService.isAuthenticated;
+  readonly showPostMessageForm = signal<boolean>(false);
+  readonly newMessageContent = signal<string>('');
+  readonly isSubmitting = signal<boolean>(false);
+  readonly submitError = signal<string | null>(null);
 
   readonly sortOptions: Array<{ value: SortOption; label: string }> = [
     { value: 'recent', label: 'Most Recent' },
@@ -128,5 +137,49 @@ export class HomeComponent implements OnInit {
     } else {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
+  }
+
+  openPostMessageForm(): void {
+    this.showPostMessageForm.set(true);
+    this.newMessageContent.set('');
+    this.submitError.set(null);
+  }
+
+  closePostMessageForm(): void {
+    this.showPostMessageForm.set(false);
+    this.newMessageContent.set('');
+    this.submitError.set(null);
+  }
+
+  submitMessage(): void {
+    const content = this.newMessageContent().trim();
+
+    if (!content) {
+      this.submitError.set('Message content cannot be empty');
+      return;
+    }
+
+    if (content.length > 5000) {
+      this.submitError.set('Message content must not exceed 5000 characters');
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.submitError.set(null);
+
+    this.messageService.createMessage(content).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.closePostMessageForm();
+        this.currentPage.set(0);
+        this.currentSort.set('recent');
+        this.loadMessages();
+      },
+      error: (err) => {
+        console.error('Error creating message:', err);
+        this.submitError.set(err.error?.message || 'Failed to create message. Please try again.');
+        this.isSubmitting.set(false);
+      }
+    });
   }
 }
