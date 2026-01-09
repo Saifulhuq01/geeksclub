@@ -2,11 +2,13 @@ package dev.sivalabs.geeksclub.rest;
 
 import dev.sivalabs.geeksclub.domain.dto.DailyStatisticsVM;
 import dev.sivalabs.geeksclub.domain.dto.MostActiveUsersVM;
+import dev.sivalabs.geeksclub.domain.dto.SpamStatisticsVM;
 import dev.sivalabs.geeksclub.domain.dto.SystemOverviewVM;
 import dev.sivalabs.geeksclub.domain.dto.TrendingMessagesVM;
 import dev.sivalabs.geeksclub.domain.service.AnalyticsService;
 import dev.sivalabs.geeksclub.rest.dto.DailyStatisticsResponse;
 import dev.sivalabs.geeksclub.rest.dto.MostActiveUsersResponse;
+import dev.sivalabs.geeksclub.rest.dto.SpamStatisticsResponse;
 import dev.sivalabs.geeksclub.rest.dto.SystemOverviewResponse;
 import dev.sivalabs.geeksclub.rest.dto.TrendingMessagesResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -119,6 +121,34 @@ class AdminAnalyticsController {
                 trending.period().days(), trending.period().startDate());
 
         TrendingMessagesResponse response = new TrendingMessagesResponse(messages, period);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/spam")
+    @SecurityRequirement(name = "Bearer")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    ResponseEntity<SpamStatisticsResponse> getSpamStatistics(
+            @RequestParam(defaultValue = "30") int days, @RequestParam(defaultValue = "10") int flaggedLimit) {
+        SpamStatisticsVM stats = analyticsService.getSpamStatistics(days, flaggedLimit);
+
+        var byDate = stats.byDate().stream()
+                .map(s -> new SpamStatisticsResponse.SpamStatByDate(
+                        s.date(), s.totalMessages(), s.spamCount(), s.spamRate()))
+                .toList();
+
+        var flaggedMessages = stats.flaggedMessages().stream()
+                .map(m -> new SpamStatisticsResponse.FlaggedMessage(
+                        m.id(), m.content(), m.spamConfidence(), m.status().name(), m.createdAt()))
+                .toList();
+
+        SpamStatisticsResponse response = new SpamStatisticsResponse(
+                stats.totalMessages(),
+                stats.spamDetected(),
+                stats.spamRate(),
+                stats.averageConfidence(),
+                byDate,
+                flaggedMessages);
 
         return ResponseEntity.ok(response);
     }

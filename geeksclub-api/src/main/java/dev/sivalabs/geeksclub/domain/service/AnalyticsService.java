@@ -3,10 +3,14 @@ package dev.sivalabs.geeksclub.domain.service;
 import dev.sivalabs.geeksclub.domain.dto.ActiveUserVM;
 import dev.sivalabs.geeksclub.domain.dto.DailyStatistic;
 import dev.sivalabs.geeksclub.domain.dto.DailyStatisticsVM;
+import dev.sivalabs.geeksclub.domain.dto.FlaggedMessageVM;
 import dev.sivalabs.geeksclub.domain.dto.MostActiveUsersVM;
+import dev.sivalabs.geeksclub.domain.dto.SpamStatByDateVM;
+import dev.sivalabs.geeksclub.domain.dto.SpamStatisticsVM;
 import dev.sivalabs.geeksclub.domain.dto.SystemOverviewVM;
 import dev.sivalabs.geeksclub.domain.dto.TrendingMessageVM;
 import dev.sivalabs.geeksclub.domain.dto.TrendingMessagesVM;
+import dev.sivalabs.geeksclub.domain.entity.MessageEntity;
 import dev.sivalabs.geeksclub.domain.repo.MessageRepository;
 import dev.sivalabs.geeksclub.domain.repo.UserRepository;
 import dev.sivalabs.geeksclub.domain.repo.VoteRepository;
@@ -155,5 +159,40 @@ public class AnalyticsService {
 
         TrendingMessagesVM.Period period = new TrendingMessagesVM.Period(days, startDate);
         return new TrendingMessagesVM(messages, period);
+    }
+
+    public SpamStatisticsVM getSpamStatistics(int days, int flaggedLimit) {
+        long totalMessages = messageRepository.count();
+        long spamDetected = messageRepository.countSpamMessages();
+        double spamRate = totalMessages > 0 ? (double) spamDetected / totalMessages : 0.0;
+        Double averageConfidence = messageRepository.getAverageSpamConfidence();
+        double avgConfidence = averageConfidence != null ? averageConfidence : 0.0;
+
+        // Get spam statistics by date
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = today.minusDays(days - 1);
+        Instant startInstant = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
+
+        List<MessageRepository.SpamStatsByDate> spamStatsByDate = messageRepository.getSpamStatsByDate(startInstant);
+
+        List<SpamStatByDateVM> byDate = spamStatsByDate.stream()
+                .map(stat -> new SpamStatByDateVM(
+                        stat.getDate().toLocalDate(), stat.getTotalMessages(), stat.getSpamCount(), stat.getSpamRate()))
+                .toList();
+
+        // Get flagged messages
+        List<MessageEntity> flaggedMessageEntities = messageRepository.getFlaggedMessages(flaggedLimit);
+
+        List<FlaggedMessageVM> flaggedMessages = flaggedMessageEntities.stream()
+                .map(msg -> {
+                    double confidence = msg.getSpamConfidence() != null
+                            ? msg.getSpamConfidence().doubleValue()
+                            : 0.0;
+                    return new FlaggedMessageVM(
+                            msg.getId(), msg.getContent(), confidence, msg.getStatus(), msg.getCreatedAt());
+                })
+                .toList();
+
+        return new SpamStatisticsVM(totalMessages, spamDetected, spamRate, avgConfidence, byDate, flaggedMessages);
     }
 }

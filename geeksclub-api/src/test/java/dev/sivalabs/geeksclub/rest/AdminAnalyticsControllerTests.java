@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.sivalabs.geeksclub.BaseIntegrationTest;
 import dev.sivalabs.geeksclub.rest.dto.DailyStatisticsResponse;
 import dev.sivalabs.geeksclub.rest.dto.MostActiveUsersResponse;
+import dev.sivalabs.geeksclub.rest.dto.SpamStatisticsResponse;
 import dev.sivalabs.geeksclub.rest.dto.SystemOverviewResponse;
 import dev.sivalabs.geeksclub.rest.dto.TrendingMessagesResponse;
 import org.junit.jupiter.api.Test;
@@ -271,6 +272,84 @@ class AdminAnalyticsControllerTests extends BaseIntegrationTest {
         restTestClient
                 .get()
                 .uri("/api/admin/analytics/messages/trending?limit=5&days=7")
+                .header("Authorization", "Bearer " + userToken)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void shouldGetSpamStatisticsWhenAdmin() {
+        String adminToken = getAdminAuthToken();
+
+        SpamStatisticsResponse response = restTestClient
+                .get()
+                .uri("/api/admin/analytics/spam?days=7&flaggedLimit=5")
+                .header("Authorization", "Bearer " + adminToken)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(SpamStatisticsResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.totalMessages()).isGreaterThan(0);
+        assertThat(response.spamDetected()).isGreaterThanOrEqualTo(0);
+        assertThat(response.spamRate()).isGreaterThanOrEqualTo(0.0);
+        assertThat(response.averageConfidence()).isGreaterThanOrEqualTo(0.0);
+        assertThat(response.byDate()).isNotNull();
+        assertThat(response.flaggedMessages()).isNotNull();
+        assertThat(response.flaggedMessages()).hasSizeLessThanOrEqualTo(5);
+
+        if (!response.flaggedMessages().isEmpty()) {
+            SpamStatisticsResponse.FlaggedMessage firstMessage =
+                    response.flaggedMessages().get(0);
+            assertThat(firstMessage.id()).isNotNull();
+            assertThat(firstMessage.content()).isNotBlank();
+            assertThat(firstMessage.spamConfidence()).isGreaterThanOrEqualTo(0.0);
+            assertThat(firstMessage.status()).isNotBlank();
+            assertThat(firstMessage.createdAt()).isNotNull();
+        }
+    }
+
+    @Test
+    void shouldGetSpamStatisticsWithDefaultParametersWhenAdmin() {
+        String adminToken = getAdminAuthToken();
+
+        SpamStatisticsResponse response = restTestClient
+                .get()
+                .uri("/api/admin/analytics/spam")
+                .header("Authorization", "Bearer " + adminToken)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(SpamStatisticsResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.totalMessages()).isGreaterThan(0);
+        assertThat(response.byDate()).isNotNull();
+        assertThat(response.flaggedMessages()).isNotNull();
+        assertThat(response.flaggedMessages()).hasSizeLessThanOrEqualTo(10);
+    }
+
+    @Test
+    void shouldNotGetSpamStatisticsWithoutAuthentication() {
+        restTestClient
+                .get()
+                .uri("/api/admin/analytics/spam?days=7&flaggedLimit=5")
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void shouldNotGetSpamStatisticsWhenNotAdmin() {
+        String userToken = getUserAuthToken();
+
+        restTestClient
+                .get()
+                .uri("/api/admin/analytics/spam?days=7&flaggedLimit=5")
                 .header("Authorization", "Bearer " + userToken)
                 .exchange()
                 .expectStatus()

@@ -70,6 +70,9 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
     @Query("SELECT COUNT(m) FROM MessageEntity m WHERE m.isSpam = true")
     long countSpamMessages();
 
+    @Query("SELECT AVG(m.spamConfidence) FROM MessageEntity m WHERE m.isSpam = true")
+    Double getAverageSpamConfidence();
+
     @Query(value = """
             SELECT DATE(created_at) as date,
                    COUNT(*) as messageCount,
@@ -80,6 +83,29 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
             ORDER BY date DESC
             """, nativeQuery = true)
     List<DailyMessageStats> getDailyMessageStats(@Param("startDate") Instant startDate);
+
+    @Query(value = """
+            SELECT DATE(created_at) as date,
+                   COUNT(*) as totalMessages,
+                   COUNT(*) FILTER (WHERE is_spam = true) as spamCount,
+                   CASE
+                       WHEN COUNT(*) > 0 THEN CAST(COUNT(*) FILTER (WHERE is_spam = true) AS DOUBLE PRECISION) / COUNT(*)
+                       ELSE 0.0
+                   END as spamRate
+            FROM messages
+            WHERE created_at >= :startDate
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+            """, nativeQuery = true)
+    List<SpamStatsByDate> getSpamStatsByDate(@Param("startDate") Instant startDate);
+
+    @Query("""
+            SELECT m FROM MessageEntity m
+            WHERE m.isSpam = true
+            ORDER BY m.spamConfidence DESC, m.createdAt DESC
+            LIMIT :limit
+            """)
+    List<MessageEntity> getFlaggedMessages(@Param("limit") int limit);
 
     interface DailyMessageStats {
         java.sql.Date getDate();
@@ -141,5 +167,15 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
         Long getScore();
 
         Long getRecentVotes();
+    }
+
+    interface SpamStatsByDate {
+        java.sql.Date getDate();
+
+        Long getTotalMessages();
+
+        Long getSpamCount();
+
+        Double getSpamRate();
     }
 }
