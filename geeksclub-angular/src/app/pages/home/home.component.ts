@@ -25,10 +25,16 @@ export class HomeComponent implements OnInit {
   readonly error = signal<string | null>(null);
 
   readonly isAuthenticated = this.authService.isAuthenticated;
+  readonly currentUser = this.authService.user;
   readonly showPostMessageForm = signal<boolean>(false);
   readonly newMessageContent = signal<string>('');
   readonly isSubmitting = signal<boolean>(false);
   readonly submitError = signal<string | null>(null);
+
+  readonly showDeleteConfirmation = signal<boolean>(false);
+  readonly messageToDelete = signal<number | null>(null);
+  readonly isDeleting = signal<boolean>(false);
+  readonly deleteError = signal<string | null>(null);
 
   readonly sortOptions: Array<{ value: SortOption; label: string }> = [
     { value: 'recent', label: 'Most Recent' },
@@ -180,6 +186,44 @@ export class HomeComponent implements OnInit {
         console.error('Error creating message:', err);
         this.submitError.set(err.error?.message || 'Failed to create message. Please try again.');
         this.isSubmitting.set(false);
+      }
+    });
+  }
+
+  canDeleteMessage(message: Message): boolean {
+    const user = this.currentUser();
+    return user !== null && user.username === message.author.username;
+  }
+
+  confirmDelete(messageId: number): void {
+    this.messageToDelete.set(messageId);
+    this.showDeleteConfirmation.set(true);
+    this.deleteError.set(null);
+  }
+
+  cancelDelete(): void {
+    this.showDeleteConfirmation.set(false);
+    this.messageToDelete.set(null);
+    this.deleteError.set(null);
+  }
+
+  deleteMessage(): void {
+    const messageId = this.messageToDelete();
+    if (!messageId) return;
+
+    this.isDeleting.set(true);
+    this.deleteError.set(null);
+
+    this.messageService.deleteMessage(messageId).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.cancelDelete();
+        this.loadMessages();
+      },
+      error: (err) => {
+        console.error('Error deleting message:', err);
+        this.deleteError.set(err.error?.message || 'Failed to delete message. Please try again.');
+        this.isDeleting.set(false);
       }
     });
   }

@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, OnInit, signal, inject } from '@ang
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MessageService, Message, PagedResponse } from '../../services/message.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-user-messages',
@@ -12,6 +13,7 @@ import { MessageService, Message, PagedResponse } from '../../services/message.s
 export class UserMessagesComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly route = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
 
   readonly username = signal<string>('');
   readonly messages = signal<Message[]>([]);
@@ -21,6 +23,12 @@ export class UserMessagesComponent implements OnInit {
   readonly pageSize = signal<number>(20);
   readonly isLoading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  readonly currentUser = this.authService.user;
+  readonly showDeleteConfirmation = signal<boolean>(false);
+  readonly messageToDelete = signal<number | null>(null);
+  readonly isDeleting = signal<boolean>(false);
+  readonly deleteError = signal<string | null>(null);
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
@@ -126,5 +134,43 @@ export class UserMessagesComponent implements OnInit {
     } else {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
+  }
+
+  canDeleteMessage(message: Message): boolean {
+    const user = this.currentUser();
+    return user !== null && user.username === message.author.username;
+  }
+
+  confirmDelete(messageId: number): void {
+    this.messageToDelete.set(messageId);
+    this.showDeleteConfirmation.set(true);
+    this.deleteError.set(null);
+  }
+
+  cancelDelete(): void {
+    this.showDeleteConfirmation.set(false);
+    this.messageToDelete.set(null);
+    this.deleteError.set(null);
+  }
+
+  deleteMessage(): void {
+    const messageId = this.messageToDelete();
+    if (!messageId) return;
+
+    this.isDeleting.set(true);
+    this.deleteError.set(null);
+
+    this.messageService.deleteMessage(messageId).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.cancelDelete();
+        this.loadMessages();
+      },
+      error: (err) => {
+        console.error('Error deleting message:', err);
+        this.deleteError.set(err.error?.message || 'Failed to delete message. Please try again.');
+        this.isDeleting.set(false);
+      }
+    });
   }
 }
