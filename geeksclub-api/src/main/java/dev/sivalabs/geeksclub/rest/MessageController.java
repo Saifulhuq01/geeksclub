@@ -186,7 +186,8 @@ class MessageController {
     @DeleteMapping("/{messageId}/vote")
     @SecurityRequirement(name = "Bearer")
     public ResponseEntity<RemoveVoteResponse> removeVote(
-            @PathVariable Long messageId, @AuthenticationPrincipal AuthenticatedUser user) {
+            @PathVariable Long messageId) {
+        AuthenticatedUser user = userContextUtils.getCurrentUserOrThrow();
         RemoveVoteResult result = messageService.removeVote(messageId, user.id());
         RemoveVoteResponse response = new RemoveVoteResponse(
                 result.messageId(),

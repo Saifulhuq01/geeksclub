@@ -36,6 +36,8 @@ export class HomeComponent implements OnInit {
   readonly isDeleting = signal<boolean>(false);
   readonly deleteError = signal<string | null>(null);
 
+  readonly votingMessageId = signal<number | null>(null);
+
   readonly sortOptions: Array<{ value: SortOption; label: string }> = [
     { value: 'recent', label: 'Most Recent' },
     { value: 'upvoted', label: 'Most Upvoted' },
@@ -195,6 +197,11 @@ export class HomeComponent implements OnInit {
     return user !== null && user.username === message.author.username;
   }
 
+  isOwnMessage(message: Message): boolean {
+    const user = this.currentUser();
+    return user !== null && user.username === message.author.username;
+  }
+
   confirmDelete(messageId: number): void {
     this.messageToDelete.set(messageId);
     this.showDeleteConfirmation.set(true);
@@ -226,5 +233,85 @@ export class HomeComponent implements OnInit {
         this.isDeleting.set(false);
       }
     });
+  }
+
+  handleUpvote(message: Message): void {
+    if (!this.isAuthenticated() || this.votingMessageId()) return;
+
+    const messageId = message.id;
+    this.votingMessageId.set(messageId);
+
+    // If already upvoted, remove the vote
+    if (message.userVote === 'UP') {
+      this.messageService.removeVote(messageId).subscribe({
+        next: (response) => {
+          this.updateMessageVotes(messageId, response.votes, null);
+          this.votingMessageId.set(null);
+        },
+        error: (err) => {
+          console.error('Error removing vote:', err);
+          this.votingMessageId.set(null);
+        }
+      });
+    } else {
+      // Add or change to upvote
+      this.messageService.voteOnMessage(messageId, 'UP').subscribe({
+        next: (response) => {
+          this.updateMessageVotes(messageId, response.votes, 'UP');
+          this.votingMessageId.set(null);
+        },
+        error: (err) => {
+          console.error('Error voting:', err);
+          this.votingMessageId.set(null);
+        }
+      });
+    }
+  }
+
+  handleDownvote(message: Message): void {
+    if (!this.isAuthenticated() || this.votingMessageId()) return;
+
+    const messageId = message.id;
+    this.votingMessageId.set(messageId);
+
+    // If already downvoted, remove the vote
+    if (message.userVote === 'DOWN') {
+      this.messageService.removeVote(messageId).subscribe({
+        next: (response) => {
+          this.updateMessageVotes(messageId, response.votes, null);
+          this.votingMessageId.set(null);
+        },
+        error: (err) => {
+          console.error('Error removing vote:', err);
+          this.votingMessageId.set(null);
+        }
+      });
+    } else {
+      // Add or change to downvote
+      this.messageService.voteOnMessage(messageId, 'DOWN').subscribe({
+        next: (response) => {
+          this.updateMessageVotes(messageId, response.votes, 'DOWN');
+          this.votingMessageId.set(null);
+        },
+        error: (err) => {
+          console.error('Error voting:', err);
+          this.votingMessageId.set(null);
+        }
+      });
+    }
+  }
+
+  private updateMessageVotes(messageId: number, votes: any, userVote: 'UP' | 'DOWN' | null): void {
+    const messages = this.messages();
+    const updatedMessages = messages.map(msg =>
+      msg.id === messageId
+        ? { ...msg, votes, userVote }
+        : msg
+    );
+    this.messages.set(updatedMessages);
+  }
+
+  isVoting(messageId: number): boolean {
+    return this.votingMessageId() === messageId;
   }
 }
