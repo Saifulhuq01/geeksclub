@@ -2,14 +2,14 @@ services:
   postgres:
     image: postgres:18-alpine
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     ports:
       - "5438:5432"
 
   broker:
-    image: confluentinc/cp-kafka:7.6.1
+    image: confluentinc/cp-kafka:8.1.1
     hostname: broker
     container_name: broker
     ports:

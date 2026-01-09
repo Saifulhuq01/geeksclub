@@ -3,8 +3,8 @@ package dev.sivalabs.geeksclub.config;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 
-import dev.sivalabs.geeksclub.shared.exception.BadRequestException;
-import dev.sivalabs.geeksclub.shared.exception.ResourceNotFoundException;
+import dev.sivalabs.geeksclub.domain.exception.BadRequestException;
+import dev.sivalabs.geeksclub.domain.exception.ResourceNotFoundException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;

@@ -1,7 +1,15 @@
 name: Build
 
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+  DOCKER_IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/geeksclub-api
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
 on:
   push:
+    paths:
+      - geeksclub-api/**
     branches:
       - 'main'
       - 'feature/*'
@@ -14,6 +22,9 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./geeksclub-api
     steps:
       - uses: actions/checkout@v6
 
@@ -27,3 +38,20 @@ jobs:
         run: chmod +x mvnw
       - name: Build with Maven
         run: ./mvnw -ntp verify
+
+      - if: ${{ github.ref == 'refs/heads/main' }}
+        name: Sonar Scan
+        run: ./mvnw initialize sonar:sonar -Dsonar.token=${{ env.SONAR_TOKEN }}
+
+      - if: ${{ github.ref == 'refs/heads/release' }}
+        name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - if: ${{ github.ref == 'refs/heads/release' }}
+        name: Build and Publish Docker Image
+        run: |
+          ./mvnw spring-boot:build-image -DskipTests -DdockerImageName=${{ env.DOCKER_IMAGE_NAME }}
+          docker push ${{ env.DOCKER_IMAGE_NAME }}

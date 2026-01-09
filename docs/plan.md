@@ -137,7 +137,6 @@ Each iteration delivers a complete, testable feature set with both backend and f
 3. **REST API**
    - Implement POST /api/users endpoint
    - Implement POST /api/auth/login endpoint
-   - Implement POST /api/auth/logout endpoint
    - Implement POST /api/auth/refresh endpoint
    - Implement GET /api/users/me endpoint
    - Add request/response DTOs
@@ -146,7 +145,7 @@ Each iteration delivers a complete, testable feature set with both backend and f
 4. **Security**
    - Configure JWT authentication filter
    - Configure authorization rules
-   - Add rate limiting for auth endpoints
+   - Add rate limiting for auth endpoints (optional)
 
 5. **Kafka Events**
    - Create UserRegistered event
@@ -154,7 +153,6 @@ Each iteration delivers a complete, testable feature set with both backend and f
    - Create Kafka producer configuration
 
 6. **Testing**
-   - Unit tests for services
    - Integration tests for API endpoints
    - Security tests for authentication flow
    - Test with Testcontainers
