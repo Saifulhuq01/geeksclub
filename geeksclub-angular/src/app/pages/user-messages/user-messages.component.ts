@@ -1,43 +1,36 @@
 import { Component, ChangeDetectionStrategy, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { MessageService, Message, PagedResponse, SortOption } from '../../services/message.service';
-import { AuthService } from '../../services/auth.service';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MessageService, Message, PagedResponse } from '../../services/message.service';
 
 @Component({
-  selector: 'app-home',
+  selector: 'app-user-messages',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './home.component.html'
+  imports: [CommonModule, RouterLink],
+  templateUrl: './user-messages.component.html'
 })
-export class HomeComponent implements OnInit {
+export class UserMessagesComponent implements OnInit {
   private readonly messageService = inject(MessageService);
-  private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
 
+  readonly username = signal<string>('');
   readonly messages = signal<Message[]>([]);
   readonly currentPage = signal<number>(0);
   readonly totalPages = signal<number>(0);
   readonly totalElements = signal<number>(0);
   readonly pageSize = signal<number>(20);
-  readonly currentSort = signal<SortOption>('recent');
   readonly isLoading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
 
-  readonly isAuthenticated = this.authService.isAuthenticated;
-  readonly showPostMessageForm = signal<boolean>(false);
-  readonly newMessageContent = signal<string>('');
-  readonly isSubmitting = signal<boolean>(false);
-  readonly submitError = signal<string | null>(null);
-
-  readonly sortOptions: Array<{ value: SortOption; label: string }> = [
-    { value: 'recent', label: 'Most Recent' },
-    { value: 'upvoted', label: 'Most Upvoted' },
-    { value: 'downvoted', label: 'Most Downvoted' }
-  ];
-
   ngOnInit(): void {
-    this.loadMessages();
+    this.route.params.subscribe(params => {
+      const username = params['username'];
+      if (username) {
+        this.username.set(username);
+        this.currentPage.set(0);
+        this.loadMessages();
+      }
+    });
   }
 
   loadMessages(): void {
@@ -47,7 +40,8 @@ export class HomeComponent implements OnInit {
     this.messageService.getMessages(
       this.currentPage(),
       this.pageSize(),
-      this.currentSort()
+      'recent',
+      this.username()
     ).subscribe({
       next: (response: PagedResponse<Message>) => {
         this.messages.set(response.content);
@@ -62,12 +56,6 @@ export class HomeComponent implements OnInit {
         this.isLoading.set(false);
       }
     });
-  }
-
-  onSortChange(sort: SortOption): void {
-    this.currentSort.set(sort);
-    this.currentPage.set(0);
-    this.loadMessages();
   }
 
   goToPage(page: number): void {
@@ -138,49 +126,5 @@ export class HomeComponent implements OnInit {
     } else {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
-  }
-
-  openPostMessageForm(): void {
-    this.showPostMessageForm.set(true);
-    this.newMessageContent.set('');
-    this.submitError.set(null);
-  }
-
-  closePostMessageForm(): void {
-    this.showPostMessageForm.set(false);
-    this.newMessageContent.set('');
-    this.submitError.set(null);
-  }
-
-  submitMessage(): void {
-    const content = this.newMessageContent().trim();
-
-    if (!content) {
-      this.submitError.set('Message content cannot be empty');
-      return;
-    }
-
-    if (content.length > 5000) {
-      this.submitError.set('Message content must not exceed 5000 characters');
-      return;
-    }
-
-    this.isSubmitting.set(true);
-    this.submitError.set(null);
-
-    this.messageService.createMessage(content).subscribe({
-      next: () => {
-        this.isSubmitting.set(false);
-        this.closePostMessageForm();
-        this.currentPage.set(0);
-        this.currentSort.set('recent');
-        this.loadMessages();
-      },
-      error: (err) => {
-        console.error('Error creating message:', err);
-        this.submitError.set(err.error?.message || 'Failed to create message. Please try again.');
-        this.isSubmitting.set(false);
-      }
-    });
   }
 }

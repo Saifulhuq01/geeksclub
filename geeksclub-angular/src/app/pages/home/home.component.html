@@ -74,8 +74,18 @@
                   {{ message.author.username.charAt(0).toUpperCase() }}
                 </div>
                 <div>
-                  <p class="font-semibold text-gray-900">{{ message.author.fullName || message.author.username }}</p>
-                  <p class="text-sm text-gray-600">@{{ message.author.username }}</p>
+                  <a
+                    [routerLink]="['/user', message.author.username]"
+                    class="font-semibold text-gray-900 hover:text-blue-600 transition-colors block"
+                  >
+                    {{ message.author.fullName || message.author.username }}
+                  </a>
+                  <a
+                    [routerLink]="['/user', message.author.username]"
+                    class="text-sm text-gray-600 hover:text-blue-600 transition-colors block"
+                  >
+                    @{{ message.author.username }}
+                  </a>
                 </div>
               </div>
               <span class="text-sm text-gray-500">

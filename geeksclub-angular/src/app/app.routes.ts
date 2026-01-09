@@ -20,6 +20,10 @@ export const routes: Routes = [
       {
         path: 'profile',
         loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent)
+      },
+      {
+        path: 'user/:username',
+        loadComponent: () => import('./pages/user-messages/user-messages.component').then(m => m.UserMessagesComponent)
       }
     ]
   },

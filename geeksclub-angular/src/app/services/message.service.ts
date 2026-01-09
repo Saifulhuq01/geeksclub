@@ -58,11 +58,15 @@ export class MessageService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${getApiBaseUrl()}/api`;
 
-  getMessages(page: number = 0, size: number = 20, sort: SortOption = 'recent'): Observable<PagedResponse<Message>> {
+  getMessages(page: number = 0, size: number = 20, sort: SortOption = 'recent', username?: string): Observable<PagedResponse<Message>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', sort);
+
+    if (username) {
+      params = params.set('user', username);
+    }
 
     return this.http.get<PagedResponse<Message>>(`${this.apiUrl}/messages`, { params });
   }

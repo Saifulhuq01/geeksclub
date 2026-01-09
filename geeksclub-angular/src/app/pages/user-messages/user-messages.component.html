@@ -1,0 +1,167 @@
+<div class="w-full max-w-4xl mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <a
+      routerLink="/"
+      class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4 transition-colors"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Back to All Messages
+    </a>
+
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white shadow-md">
+      <h2 class="text-3xl md:text-4xl font-bold mb-2">
+        Messages by @{{ username() }}
+      </h2>
+      <p class="text-blue-100">
+        Viewing all posts from this user, sorted by most recent
+      </p>
+    </div>
+  </div>
+
+  <!-- Messages Count -->
+  @if (totalElements() > 0 && !isLoading()) {
+    <div class="mb-6 text-sm text-gray-600">
+      {{ totalElements() }} message{{ totalElements() === 1 ? '' : 's' }}
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6" role="alert">
+      <p class="font-medium">Error</p>
+      <p class="text-sm">{{ error() }}</p>
+    </div>
+  }
+
+  <!-- Messages List -->
+  @if (!isLoading() && !error()) {
+    @if (messages().length === 0) {
+      <div class="text-center py-12 bg-gray-50 rounded-lg">
+        <p class="text-gray-600 text-lg">This user hasn't posted any messages yet.</p>
+      </div>
+    } @else {
+      <div class="space-y-4 mb-8">
+        @for (message of messages(); track message.id) {
+          <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+            <!-- Message Header -->
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {{ message.author.username.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900">{{ message.author.fullName || message.author.username }}</p>
+                  <p class="text-sm text-gray-600">@{{ message.author.username }}</p>
+                </div>
+              </div>
+              <span class="text-sm text-gray-500">
+                {{ formatDate(message.createdAt) }}
+              </span>
+            </div>
+
+            <!-- Message Content -->
+            <p class="text-gray-800 mb-4 whitespace-pre-wrap">{{ message.content }}</p>
+
+            <!-- Message Footer (Votes) -->
+            <div class="flex items-center gap-6 text-sm">
+              <div class="flex items-center gap-2">
+                <button
+                  class="flex items-center gap-1 text-green-600 hover:text-green-700 transition-colors"
+                  [class.font-bold]="message.userVote === 'UP'"
+                  aria-label="Upvote"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                  </svg>
+                  <span>{{ message.votes.upvoteCount }}</span>
+                </button>
+
+                <button
+                  class="flex items-center gap-1 text-red-600 hover:text-red-700 transition-colors"
+                  [class.font-bold]="message.userVote === 'DOWN'"
+                  aria-label="Downvote"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
+                  </svg>
+                  <span>{{ message.votes.downvoteCount }}</span>
+                </button>
+
+                <span class="text-gray-600 ml-2">
+                  Score: <span class="font-semibold">{{ message.votes.score }}</span>
+                </span>
+              </div>
+
+              @if (message.isSpam) {
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">
+                  Flagged
+                </span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- Pagination -->
+  @if (!isLoading() && totalPages() > 1) {
+    <div class="flex justify-center items-center gap-2 mt-8">
+      <!-- Previous Button -->
+      <button
+        (click)="previousPage()"
+        [disabled]="currentPage() === 0"
+        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        aria-label="Previous page"
+      >
+        Previous
+      </button>
+
+      <!-- Page Numbers -->
+      <div class="flex gap-1">
+        @for (pageNum of getPageNumbers(); track pageNum) {
+          @if (pageNum === -1) {
+            <span class="px-3 py-2 text-gray-500">...</span>
+          } @else {
+            <button
+              (click)="goToPage(pageNum)"
+              [class.bg-blue-600]="pageNum === currentPage()"
+              [class.text-white]="pageNum === currentPage()"
+              [class.hover:bg-gray-50]="pageNum !== currentPage()"
+              class="px-4 py-2 border border-gray-300 rounded-lg transition-colors"
+              [attr.aria-label]="'Go to page ' + (pageNum + 1)"
+              [attr.aria-current]="pageNum === currentPage() ? 'page' : null"
+            >
+              {{ pageNum + 1 }}
+            </button>
+          }
+        }
+      </div>
+
+      <!-- Next Button -->
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage() === totalPages() - 1"
+        class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        aria-label="Next page"
+      >
+        Next
+      </button>
+    </div>
+
+    <!-- Page Info -->
+    <div class="text-center mt-4 text-sm text-gray-600">
+      Page {{ currentPage() + 1 }} of {{ totalPages() }}
+    </div>
+  }
+</div>
