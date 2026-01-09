@@ -3,10 +3,12 @@ package dev.sivalabs.geeksclub.rest;
 import dev.sivalabs.geeksclub.domain.dto.DailyStatisticsVM;
 import dev.sivalabs.geeksclub.domain.dto.MostActiveUsersVM;
 import dev.sivalabs.geeksclub.domain.dto.SystemOverviewVM;
+import dev.sivalabs.geeksclub.domain.dto.TrendingMessagesVM;
 import dev.sivalabs.geeksclub.domain.service.AnalyticsService;
 import dev.sivalabs.geeksclub.rest.dto.DailyStatisticsResponse;
 import dev.sivalabs.geeksclub.rest.dto.MostActiveUsersResponse;
 import dev.sivalabs.geeksclub.rest.dto.SystemOverviewResponse;
+import dev.sivalabs.geeksclub.rest.dto.TrendingMessagesResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -87,6 +89,36 @@ class AdminAnalyticsController {
                 .toList();
 
         MostActiveUsersResponse response = new MostActiveUsersResponse(users, activeUsers.limit());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/messages/trending")
+    @SecurityRequirement(name = "Bearer")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    ResponseEntity<TrendingMessagesResponse> getTrendingMessages(
+            @RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "7") int days) {
+        TrendingMessagesVM trending = analyticsService.getTrendingMessages(limit, days);
+
+        var messages = trending.messages().stream()
+                .map(m -> new TrendingMessagesResponse.TrendingMessage(
+                        m.id(),
+                        m.content(),
+                        new TrendingMessagesResponse.AuthorInfo(
+                                m.author().id(),
+                                m.author().fullName(),
+                                m.author().username()),
+                        m.upvoteCount(),
+                        m.downvoteCount(),
+                        m.score(),
+                        m.recentVotes(),
+                        m.createdAt()))
+                .toList();
+
+        var period = new TrendingMessagesResponse.Period(
+                trending.period().days(), trending.period().startDate());
+
+        TrendingMessagesResponse response = new TrendingMessagesResponse(messages, period);
 
         return ResponseEntity.ok(response);
     }

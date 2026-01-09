@@ -5,6 +5,8 @@ import dev.sivalabs.geeksclub.domain.dto.DailyStatistic;
 import dev.sivalabs.geeksclub.domain.dto.DailyStatisticsVM;
 import dev.sivalabs.geeksclub.domain.dto.MostActiveUsersVM;
 import dev.sivalabs.geeksclub.domain.dto.SystemOverviewVM;
+import dev.sivalabs.geeksclub.domain.dto.TrendingMessageVM;
+import dev.sivalabs.geeksclub.domain.dto.TrendingMessagesVM;
 import dev.sivalabs.geeksclub.domain.repo.MessageRepository;
 import dev.sivalabs.geeksclub.domain.repo.UserRepository;
 import dev.sivalabs.geeksclub.domain.repo.VoteRepository;
@@ -128,5 +130,30 @@ public class AnalyticsService {
                 .toList();
 
         return new MostActiveUsersVM(users, limit);
+    }
+
+    public TrendingMessagesVM getTrendingMessages(int limit, int days) {
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = today.minusDays(days);
+        Instant startInstant = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
+
+        List<MessageRepository.TrendingMessageStats> trendingStats =
+                messageRepository.getTrendingMessages(startInstant, limit);
+
+        List<TrendingMessageVM> messages = trendingStats.stream()
+                .map(stat -> new TrendingMessageVM(
+                        stat.getMessageId(),
+                        stat.getContent(),
+                        new TrendingMessageVM.AuthorInfo(
+                                stat.getAuthorId(), stat.getAuthorFullName(), stat.getAuthorUsername()),
+                        stat.getUpvoteCount(),
+                        stat.getDownvoteCount(),
+                        stat.getScore(),
+                        stat.getRecentVotes(),
+                        stat.getCreatedAt()))
+                .toList();
+
+        TrendingMessagesVM.Period period = new TrendingMessagesVM.Period(days, startDate);
+        return new TrendingMessagesVM(messages, period);
     }
 }

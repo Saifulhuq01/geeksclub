@@ -88,4 +88,58 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
 
         long getSpamCount();
     }
+
+    @Query(value = """
+            SELECT m.id as messageId,
+                   m.content as content,
+                   m.created_at as createdAt,
+                   u.id as authorId,
+                   u.full_name as authorFullName,
+                   u.username as authorUsername,
+                   COALESCE(total_votes.upvote_count, 0) as upvoteCount,
+                   COALESCE(total_votes.downvote_count, 0) as downvoteCount,
+                   COALESCE(total_votes.upvote_count, 0) - COALESCE(total_votes.downvote_count, 0) as score,
+                   COALESCE(recent_votes.recent_vote_count, 0) as recentVotes
+            FROM messages m
+            JOIN users u ON m.user_id = u.id
+            LEFT JOIN (
+                SELECT message_id,
+                       SUM(CASE WHEN vote_type = 'UP' THEN 1 ELSE 0 END) as upvote_count,
+                       SUM(CASE WHEN vote_type = 'DOWN' THEN 1 ELSE 0 END) as downvote_count
+                FROM votes
+                GROUP BY message_id
+            ) total_votes ON m.id = total_votes.message_id
+            LEFT JOIN (
+                SELECT message_id, COUNT(*) as recent_vote_count
+                FROM votes
+                WHERE created_at >= :startDate
+                GROUP BY message_id
+            ) recent_votes ON m.id = recent_votes.message_id
+            WHERE m.status = 'PUBLISHED'
+            ORDER BY recentVotes DESC, score DESC, m.created_at DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<TrendingMessageStats> getTrendingMessages(@Param("startDate") Instant startDate, @Param("limit") int limit);
+
+    interface TrendingMessageStats {
+        Long getMessageId();
+
+        String getContent();
+
+        Instant getCreatedAt();
+
+        Long getAuthorId();
+
+        String getAuthorFullName();
+
+        String getAuthorUsername();
+
+        Long getUpvoteCount();
+
+        Long getDownvoteCount();
+
+        Long getScore();
+
+        Long getRecentVotes();
+    }
 }

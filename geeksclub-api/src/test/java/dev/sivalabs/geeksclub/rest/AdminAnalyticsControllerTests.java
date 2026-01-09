@@ -6,6 +6,7 @@ import dev.sivalabs.geeksclub.BaseIntegrationTest;
 import dev.sivalabs.geeksclub.rest.dto.DailyStatisticsResponse;
 import dev.sivalabs.geeksclub.rest.dto.MostActiveUsersResponse;
 import dev.sivalabs.geeksclub.rest.dto.SystemOverviewResponse;
+import dev.sivalabs.geeksclub.rest.dto.TrendingMessagesResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
@@ -192,6 +193,84 @@ class AdminAnalyticsControllerTests extends BaseIntegrationTest {
         restTestClient
                 .get()
                 .uri("/api/admin/analytics/users/active?limit=5")
+                .header("Authorization", "Bearer " + userToken)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void shouldGetTrendingMessagesWhenAdmin() {
+        String adminToken = getAdminAuthToken();
+
+        TrendingMessagesResponse response = restTestClient
+                .get()
+                .uri("/api/admin/analytics/messages/trending?limit=5&days=7")
+                .header("Authorization", "Bearer " + adminToken)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(TrendingMessagesResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.messages()).isNotNull();
+        assertThat(response.messages()).hasSizeLessThanOrEqualTo(5);
+        assertThat(response.period()).isNotNull();
+        assertThat(response.period().days()).isEqualTo(7);
+        assertThat(response.period().startDate()).isNotNull();
+
+        if (!response.messages().isEmpty()) {
+            TrendingMessagesResponse.TrendingMessage firstMessage =
+                    response.messages().get(0);
+            assertThat(firstMessage.id()).isNotNull();
+            assertThat(firstMessage.content()).isNotBlank();
+            assertThat(firstMessage.author()).isNotNull();
+            assertThat(firstMessage.author().username()).isNotBlank();
+            assertThat(firstMessage.upvoteCount()).isGreaterThanOrEqualTo(0);
+            assertThat(firstMessage.downvoteCount()).isGreaterThanOrEqualTo(0);
+            assertThat(firstMessage.recentVotes()).isGreaterThanOrEqualTo(0);
+            assertThat(firstMessage.createdAt()).isNotNull();
+        }
+    }
+
+    @Test
+    void shouldGetTrendingMessagesWithDefaultParametersWhenAdmin() {
+        String adminToken = getAdminAuthToken();
+
+        TrendingMessagesResponse response = restTestClient
+                .get()
+                .uri("/api/admin/analytics/messages/trending")
+                .header("Authorization", "Bearer " + adminToken)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(TrendingMessagesResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.messages()).isNotNull();
+        assertThat(response.period()).isNotNull();
+        assertThat(response.period().days()).isEqualTo(7);
+    }
+
+    @Test
+    void shouldNotGetTrendingMessagesWithoutAuthentication() {
+        restTestClient
+                .get()
+                .uri("/api/admin/analytics/messages/trending?limit=5&days=7")
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void shouldNotGetTrendingMessagesWhenNotAdmin() {
+        String userToken = getUserAuthToken();
+
+        restTestClient
+                .get()
+                .uri("/api/admin/analytics/messages/trending?limit=5&days=7")
                 .header("Authorization", "Bearer " + userToken)
                 .exchange()
                 .expectStatus()
