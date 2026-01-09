@@ -6,7 +6,9 @@ import dev.sivalabs.geeksclub.ApplicationProperties;
 import dev.sivalabs.geeksclub.users.domain.dto.AuthToken;
 import dev.sivalabs.geeksclub.users.domain.dto.UserVM;
 import java.time.Instant;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
@@ -14,10 +16,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class TokenProvider {
     private final JwtEncoder encoder;
+    private final JwtDecoder decoder;
     private final ApplicationProperties properties;
 
-    TokenProvider(JwtEncoder encoder, ApplicationProperties properties) {
+    TokenProvider(JwtEncoder encoder, JwtDecoder decoder, ApplicationProperties properties) {
         this.encoder = encoder;
+        this.decoder = decoder;
         this.properties = properties;
     }
 
@@ -40,5 +44,9 @@ public class TokenProvider {
                 .claim("roles", user.role().name())
                 .build();
         return this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+    }
+
+    public Jwt validateToken(String token) {
+        return this.decoder.decode(token);
     }
 }

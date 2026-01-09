@@ -41,11 +41,32 @@ class AuthControllerTests extends BaseIntegrationTest {
 
     @Test
     void shouldRefreshTokenSuccessfully() {
-        String token = getUserAuthToken();
+        MvcTestResult loginResult = mvc.post()
+                .uri("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "email":"%s",
+                            "password":"%s"
+                        }
+                        """.formatted(USER_EMAIL, USER_PASSWORD))
+                .exchange();
+
+        LoginResponse loginResponse = loginResult
+                .assertThat()
+                .bodyJson()
+                .convertTo(LoginResponse.class)
+                .actual();
+        String refreshToken = loginResponse.refreshToken();
 
         MvcTestResult testResult = mvc.post()
                 .uri("/api/auth/refresh")
-                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                            "refreshToken": "%s"
+                        }
+                        """.formatted(refreshToken))
                 .exchange();
 
         assertThat(testResult)

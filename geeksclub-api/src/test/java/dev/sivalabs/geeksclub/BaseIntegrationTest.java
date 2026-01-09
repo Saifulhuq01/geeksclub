@@ -4,19 +4,17 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import dev.sivalabs.geeksclub.users.rest.dto.LoginResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
-import org.springframework.test.web.servlet.client.RestTestClient;
 import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(TestcontainersConfig.class)
-@AutoConfigureRestTestClient
+// @AutoConfigureRestTestClient
 @AutoConfigureMockMvc
 public abstract class BaseIntegrationTest {
     public static final String ADMIN_EMAIL = "admin@gmail.com";
@@ -27,8 +25,8 @@ public abstract class BaseIntegrationTest {
     @Autowired
     protected MockMvcTester mvc;
 
-    @Autowired
-    protected RestTestClient restTestClient;
+    // @Autowired
+    // protected RestTestClient restTestClient;
 
     @Autowired
     protected JsonMapper jsonMapper;

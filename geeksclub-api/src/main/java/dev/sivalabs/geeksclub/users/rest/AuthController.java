@@ -1,13 +1,11 @@
 package dev.sivalabs.geeksclub.users.rest;
 
-import dev.sivalabs.geeksclub.users.UserContextUtils;
 import dev.sivalabs.geeksclub.users.domain.AuthService;
-import dev.sivalabs.geeksclub.users.domain.UserService;
 import dev.sivalabs.geeksclub.users.domain.dto.AuthToken;
 import dev.sivalabs.geeksclub.users.domain.dto.LoginCmd;
-import dev.sivalabs.geeksclub.users.domain.dto.UserVM;
 import dev.sivalabs.geeksclub.users.rest.dto.LoginRequest;
 import dev.sivalabs.geeksclub.users.rest.dto.LoginResponse;
+import dev.sivalabs.geeksclub.users.rest.dto.RefreshTokenRequest;
 import dev.sivalabs.geeksclub.users.rest.dto.RefreshTokenResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,13 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 class AuthController {
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
-    private final UserContextUtils userContextUtils;
-    private final UserService userService;
 
-    AuthController(AuthService authService, UserContextUtils userContextUtils, UserService userService) {
+    AuthController(AuthService authService) {
         this.authService = authService;
-        this.userContextUtils = userContextUtils;
-        this.userService = userService;
     }
 
     @PostMapping("/api/auth/login")
@@ -48,10 +42,8 @@ class AuthController {
     }
 
     @PostMapping("/api/auth/refresh")
-    RefreshTokenResponse refreshToken() {
-        var currentUser = userContextUtils.getCurrentUserOrThrow();
-        UserVM userVM = userService.getByUsername(currentUser.username());
-        AuthToken authToken = authService.generateToken(userVM);
+    RefreshTokenResponse refreshToken(@RequestBody @Valid RefreshTokenRequest req) {
+        AuthToken authToken = authService.refreshAccessToken(req.refreshToken());
         return new RefreshTokenResponse(
                 authToken.accessToken(),
                 authToken.accessTokenExpiresAt(),

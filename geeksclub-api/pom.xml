@@ -25,7 +25,7 @@
         <jacoco.minimum.coverage>50%</jacoco.minimum.coverage>
         <dockerImageName>sivaprasadreddy/geeksclub-api</dockerImageName>
         <jilt.version>1.9</jilt.version>
-        <spring-ai.version>2.0.0-M1</spring-ai.version>
+        <spring-ai.version>1.0.0-M1</spring-ai.version>
     </properties>
 
     <dependencies>
@@ -110,37 +110,29 @@
         <!-- test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation-test</artifactId>
+            <artifactId>spring-boot-test-autoconfigure</artifactId>
+            <version>3.4.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator-test</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>6.2.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-flyway-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-kafka-test</artifactId>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -163,18 +155,23 @@
             <artifactId>testcontainers-kafka</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+            <version>${spring-ai.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
+            <version>${spring-ai.version}</version>
         </dependency>
+        -->
     </dependencies>
 
     <dependencyManagement>
         <dependencies>
+            <!--
             <dependency>
                 <groupId>org.springframework.ai</groupId>
                 <artifactId>spring-ai-bom</artifactId>
@@ -182,6 +179,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            -->
         </dependencies>
     </dependencyManagement>
     <build>

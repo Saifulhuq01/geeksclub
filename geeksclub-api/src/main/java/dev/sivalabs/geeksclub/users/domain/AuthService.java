@@ -53,4 +53,15 @@ public class AuthService {
     public AuthToken generateToken(UserVM user) {
         return tokenProvider.generate(user);
     }
+
+    public AuthToken refreshAccessToken(String refreshToken) {
+        var jwt = tokenProvider.validateToken(refreshToken);
+        String email = jwt.getSubject();
+        var user = userRepository
+                .findByEmailIgnoreCase(email)
+                .map(userEntityMapper::toUserVM)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        return tokenProvider.generate(user);
+    }
 }
