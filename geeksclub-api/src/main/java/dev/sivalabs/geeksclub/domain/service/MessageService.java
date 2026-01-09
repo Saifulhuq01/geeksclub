@@ -3,8 +3,10 @@ package dev.sivalabs.geeksclub.domain.service;
 import dev.sivalabs.geeksclub.domain.dto.CreateMessageCmd;
 import dev.sivalabs.geeksclub.domain.dto.MessageDetailVM;
 import dev.sivalabs.geeksclub.domain.dto.MessageFeedItemVM;
+import dev.sivalabs.geeksclub.domain.dto.MessageStatus;
 import dev.sivalabs.geeksclub.domain.dto.MessageVM;
 import dev.sivalabs.geeksclub.domain.dto.RemoveVoteResult;
+import dev.sivalabs.geeksclub.domain.dto.ReviewMessageResult;
 import dev.sivalabs.geeksclub.domain.dto.SortBy;
 import dev.sivalabs.geeksclub.domain.dto.UserVoteResult;
 import dev.sivalabs.geeksclub.domain.dto.VoteResult;
@@ -20,6 +22,8 @@ import dev.sivalabs.geeksclub.domain.repo.MessageRepository;
 import dev.sivalabs.geeksclub.domain.repo.UserRepository;
 import dev.sivalabs.geeksclub.domain.repo.VoteRepository;
 import dev.sivalabs.geeksclub.domain.utils.IdGenerator;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
@@ -304,6 +308,27 @@ public class MessageService {
                         vc -> new VoteCounts(
                                 vc.getUpvoteCount().intValue(),
                                 vc.getDownvoteCount().intValue())));
+    }
+
+    @Transactional
+    public ReviewMessageResult reviewMessage(Long messageId, String action, String reviewedBy, String notes) {
+        MessageEntity message = messageRepository
+                .findById(messageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + messageId));
+
+        Instant reviewedAt = Instant.now();
+
+        if ("APPROVE".equals(action)) {
+            message.updateStatus(MessageStatus.PUBLISHED);
+            message.setSpam(false, BigDecimal.ZERO);
+        } else if ("REMOVE".equals(action)) {
+            message.updateStatus(MessageStatus.REMOVED);
+        }
+
+        message.setReview(reviewedBy, reviewedAt, notes);
+        messageRepository.save(message);
+
+        return new ReviewMessageResult(message.getId(), message.getStatus(), reviewedBy, reviewedAt, notes);
     }
 
     private Map<Long, VoteType> getUserVotesMap(List<Long> messageIds, Long userId) {
