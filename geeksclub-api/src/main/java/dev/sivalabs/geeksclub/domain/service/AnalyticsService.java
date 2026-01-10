@@ -70,7 +70,7 @@ public class AnalyticsService {
 
     public DailyStatisticsVM getDailyStatistics(int days) {
         LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(days - 1);
+        LocalDate startDate = endDate.minusDays(days - 1L);
 
         Instant startInstant = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
 
@@ -170,7 +170,7 @@ public class AnalyticsService {
 
         // Get spam statistics by date
         LocalDate today = LocalDate.now();
-        LocalDate startDate = today.minusDays(days - 1);
+        LocalDate startDate = today.minusDays(days - 1L);
         Instant startInstant = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
 
         List<MessageRepository.SpamStatsByDate> spamStatsByDate = messageRepository.getSpamStatsByDate(startInstant);

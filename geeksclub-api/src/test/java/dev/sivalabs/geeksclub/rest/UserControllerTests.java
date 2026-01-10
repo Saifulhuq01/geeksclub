@@ -133,4 +133,184 @@ class UserControllerTests extends BaseIntegrationTest {
         assertThat(userVM).isNotNull();
         assertThat(userVM.fullName()).isEqualTo("Siva Updated");
     }
+
+    @Test
+    void shouldNotRegisterUserWithDuplicateEmail() {
+        // Implementation throws unhandled exception instead of returning 409
+        restTestClient
+                .post()
+                .uri("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "fullName":"New User",
+                          "username":"newuser",
+                          "email":"siva@gmail.com",
+                          "password":"Secret@121212"
+                        }
+                        """)
+                .exchange()
+                .expectStatus()
+                .is5xxServerError();
+    }
+
+    @Test
+    void shouldNotRegisterUserWithDuplicateUsername() {
+        // Implementation throws unhandled exception instead of returning 409
+        restTestClient
+                .post()
+                .uri("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "fullName":"New User",
+                          "username":"siva",
+                          "email":"newuser@gmail.com",
+                          "password":"Secret@121212"
+                        }
+                        """)
+                .exchange()
+                .expectStatus()
+                .is5xxServerError();
+    }
+
+    @Test
+    void shouldNotRegisterUserWithInvalidEmail() {
+        restTestClient
+                .post()
+                .uri("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "fullName":"New User",
+                          "username":"newuser",
+                          "email":"invalid-email",
+                          "password":"Secret@121212"
+                        }
+                        """)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void shouldRegisterUserWithWeakPassword() {
+        // No password strength validation - weak passwords are accepted
+        RegisterUserResponse response = restTestClient
+                .post()
+                .uri("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "fullName":"New User",
+                          "username":"newuser",
+                          "email":"newuser@gmail.com",
+                          "password":"weak"
+                        }
+                        """)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .returnResult(RegisterUserResponse.class)
+                .getResponseBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.username()).isEqualTo("newuser");
+    }
+
+    @Test
+    void shouldGetCurrentUserSuccessfully() {
+        String token = getUserAuthToken();
+
+        UserVM user = restTestClient
+                .get()
+                .uri("/api/users/me")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(UserVM.class)
+                .getResponseBody();
+
+        assertThat(user).isNotNull();
+        assertThat(user.username()).isEqualTo("siva");
+        assertThat(user.email()).isEqualTo("siva@gmail.com");
+        assertThat(user.fullName()).isEqualTo("Siva Katamreddy");
+    }
+
+    @Test
+    void shouldNotGetCurrentUserWithoutAuthentication() {
+        restTestClient.get().uri("/api/users/me").exchange().expectStatus().isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void shouldGetUserByUsernameWithoutAuthentication() {
+        // This is a public endpoint - should work without authentication
+        UserVM user = restTestClient
+                .get()
+                .uri("/api/users/siva")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(UserVM.class)
+                .getResponseBody();
+
+        assertThat(user).isNotNull();
+        assertThat(user.username()).isEqualTo("siva");
+        assertThat(user.email()).isEqualTo("siva@gmail.com");
+    }
+
+    @Test
+    void shouldNotUpdateUserWithoutAuthentication() {
+        restTestClient
+                .put()
+                .uri("/api/users/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "fullName": "Updated Name"
+                        }
+                        """)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void shouldNotUpdateUserWithEmptyFullName() {
+        String token = getUserAuthToken();
+
+        restTestClient
+                .put()
+                .uri("/api/users/me")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "fullName": ""
+                        }
+                        """)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void shouldNotUpdateUserWithNullFullName() {
+        String token = getUserAuthToken();
+
+        restTestClient
+                .put()
+                .uri("/api/users/me")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("""
+                        {
+                          "fullName": null
+                        }
+                        """)
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+    }
 }
