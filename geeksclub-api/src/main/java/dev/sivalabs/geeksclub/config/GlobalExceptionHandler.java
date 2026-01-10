@@ -5,6 +5,7 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 import dev.sivalabs.geeksclub.domain.exception.BadRequestException;
 import dev.sivalabs.geeksclub.domain.exception.ResourceNotFoundException;
+import dev.sivalabs.geeksclub.domain.exception.UnauthorizedOperationException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -71,8 +72,8 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problemDetail;
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ProblemDetail handle(AccessDeniedException e) {
+    @ExceptionHandler({AccessDeniedException.class, UnauthorizedOperationException.class})
+    public ProblemDetail handle(RuntimeException e) {
         log.error("Access denied", e);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(FORBIDDEN, e.getMessage());
         problemDetail.setTitle("Access Denied");

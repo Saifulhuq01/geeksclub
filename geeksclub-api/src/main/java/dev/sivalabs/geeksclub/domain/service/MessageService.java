@@ -6,7 +6,6 @@ import dev.sivalabs.geeksclub.domain.exception.*;
 import dev.sivalabs.geeksclub.domain.repo.MessageRepository;
 import dev.sivalabs.geeksclub.domain.repo.MessageRepository.MessageDetailsProjection;
 import dev.sivalabs.geeksclub.domain.repo.UserRepository;
-import dev.sivalabs.geeksclub.domain.repo.VoteRepository;
 import dev.sivalabs.geeksclub.domain.utils.IdGenerator;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -16,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,19 +24,16 @@ public class MessageService {
     private static final Logger log = LoggerFactory.getLogger(MessageService.class);
     private final MessageRepository messageRepository;
     private final MessageEntityMapper messageEntityMapper;
-    private final VoteRepository voteRepository;
     private final UserRepository userRepository;
     private final MessageContentValidator messageContentValidator;
 
     MessageService(
             MessageRepository messageRepository,
             MessageEntityMapper messageEntityMapper,
-            VoteRepository voteRepository,
             UserRepository userRepository,
             MessageContentValidator messageContentValidator) {
         this.messageRepository = messageRepository;
         this.messageEntityMapper = messageEntityMapper;
-        this.voteRepository = voteRepository;
         this.userRepository = userRepository;
         this.messageContentValidator = messageContentValidator;
     }
@@ -147,7 +142,7 @@ public class MessageService {
         // Check if user is authorized to delete (must be author or admin)
         if (!isAdmin && !message.getUserId().equals(currentUserId)) {
             log.warn("Unauthorized delete attempt for message {} by user {}", messageId, currentUserId);
-            throw new AccessDeniedException("You are not authorized to delete this message");
+            throw new UnauthorizedOperationException("You are not authorized to delete this message");
         }
         messageRepository.delete(message);
         log.info("Message {} deleted successfully", messageId);
