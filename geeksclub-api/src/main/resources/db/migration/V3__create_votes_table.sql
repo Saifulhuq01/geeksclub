@@ -16,3 +16,4 @@ CREATE TABLE votes
 CREATE INDEX idx_votes_message_id ON votes (message_id);
 CREATE INDEX idx_votes_user_id ON votes (user_id);
 CREATE INDEX idx_votes_created_at ON votes (created_at);
+CREATE UNIQUE INDEX idx_votes_message_user ON votes(message_id, user_id);

@@ -18,5 +18,5 @@ public record MessageDetailResponse(
 
     public record AuthorInfo(Long id, String fullName, String username) {}
 
-    public record VotesInfo(int upvoteCount, int downvoteCount, int score) {}
+    public record VotesInfo(long upvoteCount, long downvoteCount, long score) {}
 }

@@ -1,6 +1,5 @@
 package dev.sivalabs.geeksclub.rest;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.sivalabs.geeksclub.BaseIntegrationTest;
@@ -193,9 +192,8 @@ class UserControllerTests extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldRegisterUserWithWeakPassword() {
-        // No password strength validation - weak passwords are accepted
-        RegisterUserResponse response = restTestClient
+    void shouldNotRegisterUserWithWeakPassword() {
+        restTestClient
                 .post()
                 .uri("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -209,12 +207,7 @@ class UserControllerTests extends BaseIntegrationTest {
                         """)
                 .exchange()
                 .expectStatus()
-                .isCreated()
-                .returnResult(RegisterUserResponse.class)
-                .getResponseBody();
-
-        assertThat(response).isNotNull();
-        assertThat(response.username()).isEqualTo("newuser");
+                .isBadRequest();
     }
 
     @Test

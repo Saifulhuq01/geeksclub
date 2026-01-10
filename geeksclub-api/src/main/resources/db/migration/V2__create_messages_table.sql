@@ -18,3 +18,12 @@ CREATE INDEX idx_messages_user_id ON messages (user_id);
 CREATE INDEX idx_messages_created_at ON messages (created_at DESC);
 CREATE INDEX idx_messages_status ON messages (status);
 CREATE INDEX idx_messages_is_spam ON messages (is_spam);
+
+-- Partial index for published messages
+CREATE INDEX idx_messages_published_created_at ON messages(created_at DESC) WHERE status = 'PUBLISHED';
+
+-- For message search by username
+CREATE INDEX idx_messages_user_id_created_at ON messages(user_id, created_at DESC) WHERE status = 'PUBLISHED';
+
+-- For spam queries
+CREATE INDEX idx_messages_spam ON messages(is_spam, spam_confidence DESC) WHERE is_spam = true;

@@ -179,4 +179,44 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
 
         Double getSpamRate();
     }
+
+    @Query("""
+    SELECT m.id as id, m.content as content, m.status as status, m.isSpam as isSpam, m.createdAt as createdAt,
+           u.id as authorId, u.fullName as authorFullName, u.username as authorUsername,
+           COUNT(CASE WHEN v.voteType = 'UP' THEN 1 END) as upvotes,
+           COUNT(CASE WHEN v.voteType = 'DOWN' THEN 1 END) as downvotes,
+           MAX(CASE WHEN v.userId = :currentUserId THEN v.voteType END) as userVote
+    FROM MessageEntity m
+    JOIN UserEntity u ON m.userId = u.id
+    LEFT JOIN VoteEntity v ON v.messageId = m.id
+    WHERE m.id in :messageIds AND m.status = 'PUBLISHED'
+    GROUP BY m.id, u.id
+    ORDER BY m.createdAt DESC
+    """)
+    List<MessageDetailsProjection> findMessageDetails(
+            @Param("messageIds") List<Long> messageIds, @Param("currentUserId") Long currentUserId);
+
+    interface MessageDetailsProjection {
+        Long getId();
+
+        String getContent();
+
+        String getStatus();
+
+        boolean getIsSpam();
+
+        Instant getCreatedAt();
+
+        Long getAuthorId();
+
+        String getAuthorFullName();
+
+        String getAuthorUsername();
+
+        Long getUpvotes();
+
+        Long getDownvotes();
+
+        String getUserVote();
+    }
 }

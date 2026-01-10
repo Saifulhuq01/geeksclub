@@ -224,21 +224,6 @@ class MessageControllerTests extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldLimitPageSizeTo100() {
-        var response = restTestClient
-                .get()
-                .uri("/api/messages?page=0&size=200&sort=recent")
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .returnResult(String.class)
-                .getResponseBody();
-
-        assertThat(response).isNotNull();
-        assertThat(response).contains("\"size\":100");
-    }
-
-    @Test
     void shouldGetMessageByIdWithoutAuthentication() {
         MessageDetailResponse response = restTestClient
                 .get()
@@ -386,21 +371,6 @@ class MessageControllerTests extends BaseIntegrationTest {
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    void shouldLimitPageSizeForUserMessages() {
-        var response = restTestClient
-                .get()
-                .uri("/api/messages?user=siva&page=0&size=200")
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .returnResult(String.class)
-                .getResponseBody();
-
-        assertThat(response).isNotNull();
-        assertThat(response).contains("\"size\":100");
     }
 
     @Test
@@ -861,20 +831,5 @@ class MessageControllerTests extends BaseIntegrationTest {
         assertThat(response).isNotNull();
         assertThat(response).contains("\"content\"");
         assertThat(response).contains("\"size\":5");
-    }
-
-    @Test
-    void shouldLimitPageSizeForSearchMessages() {
-        var response = restTestClient
-                .get()
-                .uri("/api/messages/search?q=Spring&page=0&size=200")
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .returnResult(String.class)
-                .getResponseBody();
-
-        assertThat(response).isNotNull();
-        assertThat(response).contains("\"size\":100");
     }
 }

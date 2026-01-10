@@ -1,64 +1,59 @@
 package dev.sivalabs.geeksclub.domain.service;
 
-import dev.sivalabs.geeksclub.domain.dto.CreateMessageCmd;
-import dev.sivalabs.geeksclub.domain.dto.MessageDetailVM;
-import dev.sivalabs.geeksclub.domain.dto.MessageFeedItemVM;
-import dev.sivalabs.geeksclub.domain.dto.MessageStatus;
-import dev.sivalabs.geeksclub.domain.dto.MessageVM;
-import dev.sivalabs.geeksclub.domain.dto.RemoveVoteResult;
-import dev.sivalabs.geeksclub.domain.dto.ReviewMessageResult;
-import dev.sivalabs.geeksclub.domain.dto.SortBy;
-import dev.sivalabs.geeksclub.domain.dto.UserVoteResult;
-import dev.sivalabs.geeksclub.domain.dto.VoteResult;
-import dev.sivalabs.geeksclub.domain.dto.VoteType;
-import dev.sivalabs.geeksclub.domain.entity.BaseEntity;
+import dev.sivalabs.geeksclub.domain.dto.*;
 import dev.sivalabs.geeksclub.domain.entity.MessageEntity;
-import dev.sivalabs.geeksclub.domain.entity.UserEntity;
-import dev.sivalabs.geeksclub.domain.entity.VoteEntity;
-import dev.sivalabs.geeksclub.domain.exception.BadRequestException;
-import dev.sivalabs.geeksclub.domain.exception.ResourceNotFoundException;
-import dev.sivalabs.geeksclub.domain.exception.UserNotFoundException;
+import dev.sivalabs.geeksclub.domain.exception.*;
 import dev.sivalabs.geeksclub.domain.repo.MessageRepository;
+import dev.sivalabs.geeksclub.domain.repo.MessageRepository.MessageDetailsProjection;
 import dev.sivalabs.geeksclub.domain.repo.UserRepository;
 import dev.sivalabs.geeksclub.domain.repo.VoteRepository;
 import dev.sivalabs.geeksclub.domain.utils.IdGenerator;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
 public class MessageService {
+    private static final Logger log = LoggerFactory.getLogger(MessageService.class);
     private final MessageRepository messageRepository;
     private final MessageEntityMapper messageEntityMapper;
     private final VoteRepository voteRepository;
     private final UserRepository userRepository;
+    private final MessageContentValidator messageContentValidator;
 
     MessageService(
             MessageRepository messageRepository,
             MessageEntityMapper messageEntityMapper,
             VoteRepository voteRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            MessageContentValidator messageContentValidator) {
         this.messageRepository = messageRepository;
         this.messageEntityMapper = messageEntityMapper;
         this.voteRepository = voteRepository;
         this.userRepository = userRepository;
+        this.messageContentValidator = messageContentValidator;
     }
 
     @Transactional
     public MessageVM createMessage(CreateMessageCmd cmd) {
+        log.info("Creating message for user {}", cmd.userId());
+        messageContentValidator.validate(cmd.content());
         var message = new MessageEntity(IdGenerator.generateLong(), cmd.userId(), cmd.content());
         var savedMessage = messageRepository.save(message);
+        log.info("Message {} created successfully by user {}", savedMessage.getId(), cmd.userId());
         return messageEntityMapper.toMessageVM(savedMessage);
     }
 
-    public Page<MessageFeedItemVM> getMessageFeed(int page, int size, SortBy sortBy, Long currentUserId) {
+    public Page<MessageDetailVM> getMessageFeed(int page, int size, SortBy sortBy, Long currentUserId) {
         Pageable pageable = PageRequest.of(page, size);
         Page<MessageEntity> messagePage =
                 switch (sortBy) {
@@ -75,11 +70,11 @@ public class MessageService {
         return getMessageFeedItemVMS(currentUserId, messagePage);
     }
 
-    public Page<MessageFeedItemVM> getUserMessages(String username, int page, int size, Long currentUserId) {
+    public Page<MessageDetailVM> getUserMessages(String username, int page, int size, Long currentUserId) {
         // Verify user exists
         userRepository
                 .findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+                .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
 
         Pageable pageable = PageRequest.of(page, size);
         Page<MessageEntity> messagePage = messageRepository.findByUsernameOrderByCreatedAtDesc(username, pageable);
@@ -91,7 +86,7 @@ public class MessageService {
         return getMessageFeedItemVMS(currentUserId, messagePage);
     }
 
-    public Page<MessageFeedItemVM> searchMessages(String query, int page, int size, Long currentUserId) {
+    public Page<MessageDetailVM> searchMessages(String query, int page, int size, Long currentUserId) {
         Pageable pageable = PageRequest.of(page, size);
         Page<MessageEntity> messagePage = messageRepository.searchMessages(query, pageable);
 
@@ -102,173 +97,64 @@ public class MessageService {
         return getMessageFeedItemVMS(currentUserId, messagePage);
     }
 
-    private Page<MessageFeedItemVM> getMessageFeedItemVMS(Long currentUserId, Page<MessageEntity> messagePage) {
+    private Page<MessageDetailVM> getMessageFeedItemVMS(Long currentUserId, Page<MessageEntity> messagePage) {
         List<Long> messageIds =
-                messagePage.getContent().stream().map(MessageEntity::getId).collect(Collectors.toList());
-
-        // Get vote counts for all messages
-        Map<Long, VoteCounts> voteCountsMap = getVoteCountsMap(messageIds);
-
-        // Get user votes if authenticated
-        Map<Long, VoteType> userVotesMap = new HashMap<>();
-        if (currentUserId != null) {
-            userVotesMap = getUserVotesMap(messageIds, currentUserId);
+                messagePage.getContent().stream().map(MessageEntity::getId).toList();
+        List<MessageDetailsProjection> messagesDetails =
+                messageRepository.findMessageDetails(messageIds, currentUserId);
+        Map<Long, MessageDetailsProjection> messageDetailsMap = new HashMap<>();
+        for (MessageDetailsProjection projection : messagesDetails) {
+            messageDetailsMap.put(projection.getId(), projection);
         }
 
-        // Get user info for all message authors
-        Set<Long> userIds =
-                messagePage.getContent().stream().map(MessageEntity::getUserId).collect(Collectors.toSet());
-        Map<Long, UserInfo> userInfoMap = getUserInfoMap(userIds);
-
-        Map<Long, VoteType> finalUserVotesMap = userVotesMap;
         return messagePage.map(message -> {
-            VoteCounts voteCounts = voteCountsMap.getOrDefault(message.getId(), new VoteCounts(0, 0));
-            VoteType userVote = finalUserVotesMap.get(message.getId());
-            UserInfo userInfo = userInfoMap.get(message.getUserId());
-
-            return new MessageFeedItemVM(
-                    message.getId(),
-                    message.getContent(),
-                    userInfo != null ? userInfo.id() : null,
-                    userInfo != null ? userInfo.fullName() : null,
-                    userInfo != null ? userInfo.username() : null,
-                    message.getStatus(),
-                    message.isSpam(),
-                    voteCounts.upvoteCount(),
-                    voteCounts.downvoteCount(),
-                    voteCounts.upvoteCount() - voteCounts.downvoteCount(),
-                    userVote != null ? userVote.name() : null,
-                    message.getCreatedAt());
+            var messageDetails = messageDetailsMap.get(message.getId());
+            return buildMessageDetailVM(message, messageDetails);
         });
     }
 
-    @Transactional
-    public void deleteMessage(Long messageId, Long currentUserId, boolean isAdmin) {
-        MessageEntity message =
-                messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
-
-        // Check if user is authorized to delete (must be author or admin)
-        if (!isAdmin && !message.getUserId().equals(currentUserId)) {
-            throw new org.springframework.security.access.AccessDeniedException(
-                    "You are not authorized to delete this message");
-        }
-
-        messageRepository.delete(message);
+    public MessageDetailVM getMessage(Long messageId, Long currentUserId) {
+        var message = messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
+        var messageDetails = messageRepository
+                .findMessageDetails(List.of(messageId), currentUserId)
+                .getFirst();
+        return buildMessageDetailVM(message, messageDetails);
     }
 
-    public MessageDetailVM getMessage(Long messageId, Long currentUserId) {
-        MessageEntity message =
-                messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
-
-        // Get vote counts for this message
-        List<VoteRepository.VoteCount> voteCounts = voteRepository.getVoteCountsByMessageIds(List.of(messageId));
-        VoteCounts counts = voteCounts.isEmpty()
-                ? new VoteCounts(0, 0)
-                : new VoteCounts(
-                        voteCounts.getFirst().getUpvoteCount().intValue(),
-                        voteCounts.getFirst().getDownvoteCount().intValue());
-
-        // Get user vote if authenticated
-        VoteType userVote = null;
-        if (currentUserId != null) {
-            Optional<VoteEntity> vote = voteRepository.findByMessageIdAndUserId(messageId, currentUserId);
-            userVote = vote.map(VoteEntity::getVoteType).orElse(null);
-        }
-
-        // Get author information
-        UserEntity author = userRepository
-                .findById(message.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + message.getUserId()));
-
+    private MessageDetailVM buildMessageDetailVM(MessageEntity message, MessageDetailsProjection messageDetails) {
         return new MessageDetailVM(
                 message.getId(),
                 message.getContent(),
-                author.getId(),
-                author.getUsername(),
-                author.getFullName(),
+                messageDetails.getAuthorId(),
+                messageDetails.getAuthorUsername(),
+                messageDetails.getAuthorFullName(),
                 message.getStatus(),
                 message.isSpam(),
                 message.getSpamConfidence(),
-                counts.upvoteCount(),
-                counts.downvoteCount(),
-                counts.upvoteCount() - counts.downvoteCount(),
-                userVote != null ? userVote.name() : null,
+                messageDetails.getUpvotes(),
+                messageDetails.getDownvotes(),
+                messageDetails.getUpvotes() - messageDetails.getDownvotes(),
+                messageDetails.getUserVote(),
                 message.getCreatedAt(),
                 message.getUpdatedAt());
     }
 
     @Transactional
-    public VoteResult vote(Long messageId, Long userId, VoteType voteType) {
-        userRepository
-                .findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " not found"));
-        MessageEntity message =
-                messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
+    public void deleteMessage(Long messageId, Long currentUserId, boolean isAdmin) {
+        log.info("Delete request for message {} by user {} (admin: {})", messageId, currentUserId, isAdmin);
+        var message = messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
 
-        if (message.getUserId().equals(userId)) {
-            throw new BadRequestException("You cannot vote for your own message");
+        // Check if user is authorized to delete (must be author or admin)
+        if (!isAdmin && !message.getUserId().equals(currentUserId)) {
+            log.warn("Unauthorized delete attempt for message {} by user {}", messageId, currentUserId);
+            throw new AccessDeniedException("You are not authorized to delete this message");
         }
-
-        Optional<VoteEntity> existingVoteOptional = voteRepository.findByMessageIdAndUserId(messageId, userId);
-
-        VoteEntity vote;
-        if (existingVoteOptional.isPresent()) {
-            vote = existingVoteOptional.get();
-            if (vote.getVoteType() != voteType) {
-                vote.updateVoteType(voteType);
-                vote = voteRepository.save(vote);
-            }
-        } else {
-            vote = new VoteEntity(IdGenerator.generateLong(), userId, messageId, voteType);
-            vote = voteRepository.save(vote);
-        }
-
-        int upvoteCount = voteRepository.countUpVotes(messageId);
-        int downvoteCount = voteRepository.countDownVotes(messageId);
-        int score = upvoteCount - downvoteCount;
-
-        return new VoteResult(messageId, voteType, upvoteCount, downvoteCount, score, vote.getUpdatedAt());
+        messageRepository.delete(message);
+        log.info("Message {} deleted successfully", messageId);
     }
 
-    public UserVoteResult getUserVote(Long messageId, Long userId) {
-        messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
-
-        return voteRepository
-                .findByMessageIdAndUserId(messageId, userId)
-                .map(v -> new UserVoteResult(messageId, v.getVoteType(), v.getUpdatedAt()))
-                .orElse(new UserVoteResult(messageId, null, null));
-    }
-
-    @Transactional
-    public RemoveVoteResult removeVote(Long messageId, Long userId) {
-        messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
-
-        VoteEntity vote = voteRepository
-                .findByMessageIdAndUserId(messageId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Vote not found for message " + messageId + " by user " + userId));
-
-        voteRepository.delete(vote);
-
-        int upvoteCount = voteRepository.countUpVotes(messageId);
-        int downvoteCount = voteRepository.countDownVotes(messageId);
-        int score = upvoteCount - downvoteCount;
-
-        return new RemoveVoteResult(messageId, upvoteCount, downvoteCount, score, "Vote removed successfully");
-    }
-
-    private ResourceNotFoundException messageNotFoundException(Long messageId) {
-        return new ResourceNotFoundException("Message with id " + messageId + " not found");
-    }
-
-    private Map<Long, VoteCounts> getVoteCountsMap(List<Long> messageIds) {
-        List<VoteRepository.VoteCount> voteCounts = voteRepository.getVoteCountsByMessageIds(messageIds);
-        return voteCounts.stream()
-                .collect(Collectors.toMap(
-                        VoteRepository.VoteCount::getMessageId,
-                        vc -> new VoteCounts(
-                                vc.getUpvoteCount().intValue(),
-                                vc.getDownvoteCount().intValue())));
+    private MessageNotFoundException messageNotFoundException(Long messageId) {
+        return new MessageNotFoundException("Message with id " + messageId + " not found");
     }
 
     @Transactional
@@ -290,19 +176,4 @@ public class MessageService {
 
         return new ReviewMessageResult(message.getId(), message.getStatus(), reviewedBy, reviewedAt, notes);
     }
-
-    private Map<Long, VoteType> getUserVotesMap(List<Long> messageIds, Long userId) {
-        List<VoteEntity> userVotes = voteRepository.findByMessageIdsAndUserId(messageIds, userId);
-        return userVotes.stream().collect(Collectors.toMap(VoteEntity::getMessageId, VoteEntity::getVoteType));
-    }
-
-    private Map<Long, UserInfo> getUserInfoMap(Set<Long> userIds) {
-        return userRepository.findAllById(userIds).stream()
-                .collect(Collectors.toMap(
-                        BaseEntity::getId, user -> new UserInfo(user.getId(), user.getFullName(), user.getUsername())));
-    }
-
-    record VoteCounts(int upvoteCount, int downvoteCount) {}
-
-    record UserInfo(Long id, String fullName, String username) {}
 }

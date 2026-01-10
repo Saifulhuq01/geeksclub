@@ -2,16 +2,15 @@ package dev.sivalabs.geeksclub.rest;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
-import dev.sivalabs.geeksclub.domain.dto.AuthenticatedUser;
 import dev.sivalabs.geeksclub.domain.dto.CreateMessageCmd;
 import dev.sivalabs.geeksclub.domain.dto.MessageDetailVM;
-import dev.sivalabs.geeksclub.domain.dto.MessageFeedItemVM;
 import dev.sivalabs.geeksclub.domain.dto.RemoveVoteResult;
 import dev.sivalabs.geeksclub.domain.dto.SortBy;
 import dev.sivalabs.geeksclub.domain.dto.UserVoteResult;
 import dev.sivalabs.geeksclub.domain.dto.VoteResult;
 import dev.sivalabs.geeksclub.domain.service.MessageService;
 import dev.sivalabs.geeksclub.domain.service.UserService;
+import dev.sivalabs.geeksclub.domain.service.VoteService;
 import dev.sivalabs.geeksclub.rest.dto.CreateMessageRequest;
 import dev.sivalabs.geeksclub.rest.dto.CreateMessageResponse;
 import dev.sivalabs.geeksclub.rest.dto.MessageDetailResponse;
@@ -23,6 +22,9 @@ import dev.sivalabs.geeksclub.rest.dto.VoteResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,11 +34,17 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Messages API")
 class MessageController {
     private final MessageService messageService;
+    private final VoteService voteService;
     private final UserService userService;
     private final UserContextUtils userContextUtils;
 
-    MessageController(MessageService messageService, UserService userService, UserContextUtils userContextUtils) {
+    MessageController(
+            MessageService messageService,
+            VoteService voteService,
+            UserService userService,
+            UserContextUtils userContextUtils) {
         this.messageService = messageService;
+        this.voteService = voteService;
         this.userService = userService;
         this.userContextUtils = userContextUtils;
     }
@@ -69,17 +77,12 @@ class MessageController {
     @GetMapping("")
     ResponseEntity<Page<MessageFeedItem>> getMessageFeed(
             @RequestParam(required = false) String user,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Max(100) int size,
             @RequestParam(defaultValue = "recent") String sort) {
 
-        // Validate and limit page size
-        if (size > 100) {
-            size = 100;
-        }
-
         Long currentUserId = userContextUtils.getCurrentUserId();
-        Page<MessageFeedItemVM> feedPage;
+        Page<MessageDetailVM> feedPage;
 
         if (user != null && !user.isBlank()) {
             // Get messages by specific user
@@ -90,44 +93,22 @@ class MessageController {
             feedPage = messageService.getMessageFeed(page, size, sortBy, currentUserId);
         }
 
-        Page<MessageFeedItem> response = feedPage.map(item -> new MessageFeedItem(
-                item.id(),
-                item.content(),
-                new MessageFeedItem.AuthorInfo(item.authorId(), item.authorFullName(), item.authorUsername()),
-                item.status(),
-                item.isSpam(),
-                new MessageFeedItem.VotesInfo(item.upvoteCount(), item.downvoteCount(), item.score()),
-                item.userVote(),
-                item.createdAt()));
-
-        return ResponseEntity.ok(response);
+        return mapToMessageFeedItems(feedPage);
     }
 
     @GetMapping("/search")
     ResponseEntity<Page<MessageFeedItem>> searchMessages(
-            @RequestParam String q,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam @Size(min = 3, max = 100, message = "Query must be between 3 and 100 characters") String q,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Max(100) int size) {
 
-        // Validate and limit page size
-        if (size > 100) {
-            size = 100;
-        }
+        // Sanitize input - escape LIKE wildcards
+        String sanitizedQuery = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
 
         Long currentUserId = userContextUtils.getCurrentUserId();
-        Page<MessageFeedItemVM> feedPage = messageService.searchMessages(q, page, size, currentUserId);
+        Page<MessageDetailVM> feedPage = messageService.searchMessages(sanitizedQuery, page, size, currentUserId);
 
-        Page<MessageFeedItem> response = feedPage.map(item -> new MessageFeedItem(
-                item.id(),
-                item.content(),
-                new MessageFeedItem.AuthorInfo(item.authorId(), item.authorFullName(), item.authorUsername()),
-                item.status(),
-                item.isSpam(),
-                new MessageFeedItem.VotesInfo(item.upvoteCount(), item.downvoteCount(), item.score()),
-                item.userVote(),
-                item.createdAt()));
-
-        return ResponseEntity.ok(response);
+        return mapToMessageFeedItems(feedPage);
     }
 
     @GetMapping("/{id}")
@@ -154,17 +135,17 @@ class MessageController {
     @DeleteMapping("/{id}")
     @SecurityRequirement(name = "Bearer")
     ResponseEntity<Void> deleteMessage(@PathVariable Long id) {
-        var currentUser = userContextUtils.getCurrentUserOrThrow();
+        var currentUserId = userContextUtils.getCurrentUserIdOrThrow();
         boolean isAdmin = userContextUtils.isCurrentUserAdmin();
-        messageService.deleteMessage(id, currentUser.id(), isAdmin);
+        messageService.deleteMessage(id, currentUserId, isAdmin);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{messageId}/vote")
     @SecurityRequirement(name = "Bearer")
     public ResponseEntity<UserVoteResponse> getUserVote(@PathVariable Long messageId) {
-        var user = userContextUtils.getCurrentUserOrThrow();
-        UserVoteResult result = messageService.getUserVote(messageId, user.id());
+        var currentUserId = userContextUtils.getCurrentUserIdOrThrow();
+        UserVoteResult result = voteService.getUserVote(messageId, currentUserId);
         UserVoteResponse response = new UserVoteResponse(result.messageId(), result.voteType(), result.votedAt());
         return ResponseEntity.ok(response);
     }
@@ -172,8 +153,8 @@ class MessageController {
     @PostMapping("/{messageId}/vote")
     @SecurityRequirement(name = "Bearer")
     public ResponseEntity<VoteResponse> vote(@PathVariable Long messageId, @RequestBody @Valid VoteRequest request) {
-        var user = userContextUtils.getCurrentUserOrThrow();
-        VoteResult result = messageService.vote(messageId, user.id(), request.voteType());
+        var userId = userContextUtils.getCurrentUserIdOrThrow();
+        VoteResult result = voteService.vote(messageId, userId, request.voteType());
         VoteResponse response = new VoteResponse(
                 result.messageId(),
                 result.voteType(),
@@ -185,12 +166,26 @@ class MessageController {
     @DeleteMapping("/{messageId}/vote")
     @SecurityRequirement(name = "Bearer")
     public ResponseEntity<RemoveVoteResponse> removeVote(@PathVariable Long messageId) {
-        AuthenticatedUser user = userContextUtils.getCurrentUserOrThrow();
-        RemoveVoteResult result = messageService.removeVote(messageId, user.id());
+        var userId = userContextUtils.getCurrentUserIdOrThrow();
+        RemoveVoteResult result = voteService.removeVote(messageId, userId);
         RemoveVoteResponse response = new RemoveVoteResponse(
                 result.messageId(),
                 new VoteResponse.Votes(result.upvoteCount(), result.downvoteCount(), result.score()),
                 result.message());
+        return ResponseEntity.ok(response);
+    }
+
+    private ResponseEntity<Page<MessageFeedItem>> mapToMessageFeedItems(Page<MessageDetailVM> feedPage) {
+        Page<MessageFeedItem> response = feedPage.map(item -> new MessageFeedItem(
+                item.id(),
+                item.content(),
+                new MessageFeedItem.AuthorInfo(item.authorId(), item.authorFullName(), item.authorUsername()),
+                item.status(),
+                item.isSpam(),
+                new MessageFeedItem.VotesInfo(item.upvoteCount(), item.downvoteCount(), item.score()),
+                item.userVote(),
+                item.createdAt()));
+
         return ResponseEntity.ok(response);
     }
 }
