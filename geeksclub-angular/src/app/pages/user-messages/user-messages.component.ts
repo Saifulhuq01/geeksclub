@@ -1,8 +1,9 @@
-import { Component, ChangeDetectionStrategy, OnInit, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MessageService, Message, PagedResponse } from '../../services/message.service';
 import { AuthService } from '../../services/auth.service';
+import { UserService, UserProfile } from '../../services/user.service';
 
 @Component({
   selector: 'app-user-messages',
@@ -12,10 +13,14 @@ import { AuthService } from '../../services/auth.service';
 })
 export class UserMessagesComponent implements OnInit {
   private readonly messageService = inject(MessageService);
+  private readonly userService = inject(UserService);
   private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
 
   readonly username = signal<string>('');
+  readonly userProfile = signal<UserProfile | null>(null);
+  readonly isLoadingProfile = signal<boolean>(false);
+  readonly profileError = signal<string | null>(null);
   readonly messages = signal<Message[]>([]);
   readonly currentPage = signal<number>(0);
   readonly totalPages = signal<number>(0);
@@ -23,6 +28,19 @@ export class UserMessagesComponent implements OnInit {
   readonly pageSize = signal<number>(20);
   readonly isLoading = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  readonly userInitials = computed(() => {
+    const profile = this.userProfile();
+    if (!profile) {
+      const username = this.username();
+      return username ? username.charAt(0).toUpperCase() : '';
+    }
+    const names = profile.fullName.split(' ');
+    if (names.length >= 2) {
+      return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return profile.fullName.charAt(0).toUpperCase();
+  });
 
   readonly currentUser = this.authService.user;
   readonly isAuthenticated = this.authService.isAuthenticated;
@@ -39,7 +57,25 @@ export class UserMessagesComponent implements OnInit {
       if (username) {
         this.username.set(username);
         this.currentPage.set(0);
+        this.loadUserProfile();
         this.loadMessages();
+      }
+    });
+  }
+
+  loadUserProfile(): void {
+    this.isLoadingProfile.set(true);
+    this.profileError.set(null);
+
+    this.userService.getUserProfile(this.username()).subscribe({
+      next: (profile: UserProfile) => {
+        this.userProfile.set(profile);
+        this.isLoadingProfile.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading user profile:', err);
+        this.profileError.set('Failed to load user profile.');
+        this.isLoadingProfile.set(false);
       }
     });
   }
@@ -260,5 +296,14 @@ export class UserMessagesComponent implements OnInit {
 
   isVoting(messageId: number): boolean {
     return this.votingMessageId() === messageId;
+  }
+
+  formatJoinDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   }
 }
