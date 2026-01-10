@@ -1,6 +1,6 @@
 package dev.sivalabs.geeksclub.domain.exception;
 
-public class BadRequestException extends DomainException {
+public class BadRequestException extends RuntimeException {
     public BadRequestException(String message) {
         super(message);
     }

@@ -15,7 +15,7 @@ import dev.sivalabs.geeksclub.domain.entity.BaseEntity;
 import dev.sivalabs.geeksclub.domain.entity.MessageEntity;
 import dev.sivalabs.geeksclub.domain.entity.UserEntity;
 import dev.sivalabs.geeksclub.domain.entity.VoteEntity;
-import dev.sivalabs.geeksclub.domain.exception.ConflictException;
+import dev.sivalabs.geeksclub.domain.exception.BadRequestException;
 import dev.sivalabs.geeksclub.domain.exception.ResourceNotFoundException;
 import dev.sivalabs.geeksclub.domain.exception.UserNotFoundException;
 import dev.sivalabs.geeksclub.domain.repo.MessageRepository;
@@ -69,46 +69,10 @@ public class MessageService {
                 };
 
         if (messagePage.isEmpty()) {
-            return messagePage.map(m -> null);
+            return Page.empty();
         }
 
-        List<Long> messageIds =
-                messagePage.getContent().stream().map(MessageEntity::getId).collect(Collectors.toList());
-
-        // Get vote counts for all messages
-        Map<Long, VoteCounts> voteCountsMap = getVoteCountsMap(messageIds);
-
-        // Get user votes if authenticated
-        Map<Long, VoteType> userVotesMap = new HashMap<>();
-        if (currentUserId != null) {
-            userVotesMap = getUserVotesMap(messageIds, currentUserId);
-        }
-
-        // Get user info for all message authors
-        Set<Long> userIds =
-                messagePage.getContent().stream().map(MessageEntity::getUserId).collect(Collectors.toSet());
-        Map<Long, UserInfo> userInfoMap = getUserInfoMap(userIds);
-
-        Map<Long, VoteType> finalUserVotesMap = userVotesMap;
-        return messagePage.map(message -> {
-            VoteCounts voteCounts = voteCountsMap.getOrDefault(message.getId(), new VoteCounts(0, 0));
-            VoteType userVote = finalUserVotesMap.get(message.getId());
-            UserInfo userInfo = userInfoMap.get(message.getUserId());
-
-            return new MessageFeedItemVM(
-                    message.getId(),
-                    message.getContent(),
-                    userInfo != null ? userInfo.id() : null,
-                    userInfo != null ? userInfo.fullName() : null,
-                    userInfo != null ? userInfo.username() : null,
-                    message.getStatus(),
-                    message.isSpam(),
-                    voteCounts.upvoteCount(),
-                    voteCounts.downvoteCount(),
-                    voteCounts.upvoteCount() - voteCounts.downvoteCount(),
-                    userVote != null ? userVote.name() : null,
-                    message.getCreatedAt());
-        });
+        return getMessageFeedItemVMS(currentUserId, messagePage);
     }
 
     public Page<MessageFeedItemVM> getUserMessages(String username, int page, int size, Long currentUserId) {
@@ -121,7 +85,7 @@ public class MessageService {
         Page<MessageEntity> messagePage = messageRepository.findByUsernameOrderByCreatedAtDesc(username, pageable);
 
         if (messagePage.isEmpty()) {
-            return messagePage.map(m -> null);
+            return Page.empty();
         }
 
         return getMessageFeedItemVMS(currentUserId, messagePage);
@@ -132,7 +96,7 @@ public class MessageService {
         Page<MessageEntity> messagePage = messageRepository.searchMessages(query, pageable);
 
         if (messagePage.isEmpty()) {
-            return messagePage.map(m -> null);
+            return Page.empty();
         }
 
         return getMessageFeedItemVMS(currentUserId, messagePage);
@@ -180,9 +144,8 @@ public class MessageService {
 
     @Transactional
     public void deleteMessage(Long messageId, Long currentUserId, boolean isAdmin) {
-        MessageEntity message = messageRepository
-                .findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + messageId));
+        MessageEntity message =
+                messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
 
         // Check if user is authorized to delete (must be author or admin)
         if (!isAdmin && !message.getUserId().equals(currentUserId)) {
@@ -194,17 +157,16 @@ public class MessageService {
     }
 
     public MessageDetailVM getMessage(Long messageId, Long currentUserId) {
-        MessageEntity message = messageRepository
-                .findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + messageId));
+        MessageEntity message =
+                messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
 
         // Get vote counts for this message
         List<VoteRepository.VoteCount> voteCounts = voteRepository.getVoteCountsByMessageIds(List.of(messageId));
         VoteCounts counts = voteCounts.isEmpty()
                 ? new VoteCounts(0, 0)
                 : new VoteCounts(
-                        voteCounts.get(0).getUpvoteCount().intValue(),
-                        voteCounts.get(0).getDownvoteCount().intValue());
+                        voteCounts.getFirst().getUpvoteCount().intValue(),
+                        voteCounts.getFirst().getDownvoteCount().intValue());
 
         // Get user vote if authenticated
         VoteType userVote = null;
@@ -240,12 +202,11 @@ public class MessageService {
         userRepository
                 .findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User with id " + userId + " not found"));
-        MessageEntity message = messageRepository
-                .findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Message with id " + messageId + " not found"));
+        MessageEntity message =
+                messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
 
         if (message.getUserId().equals(userId)) {
-            throw new ConflictException("You cannot vote for your own message");
+            throw new BadRequestException("You cannot vote for your own message");
         }
 
         Optional<VoteEntity> existingVoteOptional = voteRepository.findByMessageIdAndUserId(messageId, userId);
@@ -270,9 +231,7 @@ public class MessageService {
     }
 
     public UserVoteResult getUserVote(Long messageId, Long userId) {
-        messageRepository
-                .findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Message with id " + messageId + " not found"));
+        messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
 
         return voteRepository
                 .findByMessageIdAndUserId(messageId, userId)
@@ -282,9 +241,7 @@ public class MessageService {
 
     @Transactional
     public RemoveVoteResult removeVote(Long messageId, Long userId) {
-        messageRepository
-                .findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Message with id " + messageId + " not found"));
+        messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
 
         VoteEntity vote = voteRepository
                 .findByMessageIdAndUserId(messageId, userId)
@@ -300,6 +257,10 @@ public class MessageService {
         return new RemoveVoteResult(messageId, upvoteCount, downvoteCount, score, "Vote removed successfully");
     }
 
+    private ResourceNotFoundException messageNotFoundException(Long messageId) {
+        return new ResourceNotFoundException("Message with id " + messageId + " not found");
+    }
+
     private Map<Long, VoteCounts> getVoteCountsMap(List<Long> messageIds) {
         List<VoteRepository.VoteCount> voteCounts = voteRepository.getVoteCountsByMessageIds(messageIds);
         return voteCounts.stream()
@@ -312,9 +273,8 @@ public class MessageService {
 
     @Transactional
     public ReviewMessageResult reviewMessage(Long messageId, String action, String reviewedBy, String notes) {
-        MessageEntity message = messageRepository
-                .findById(messageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Message not found with id: " + messageId));
+        MessageEntity message =
+                messageRepository.findById(messageId).orElseThrow(() -> messageNotFoundException(messageId));
 
         Instant reviewedAt = Instant.now();
 

@@ -1,5 +1,6 @@
 package dev.sivalabs.geeksclub.rest;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.sivalabs.geeksclub.BaseIntegrationTest;
@@ -11,6 +12,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.web.servlet.client.ExchangeResult;
 
 @Sql("/test-data.sql")
 class UserControllerTests extends BaseIntegrationTest {
@@ -44,30 +46,27 @@ class UserControllerTests extends BaseIntegrationTest {
 
     @ParameterizedTest
     @CsvSource({
-        ",user1,user1@gmail.com,password123,fullName",
-        "user1,,user1@gmail.com,password123,username",
-        "user1,user1,,password123,email",
-        "user1,user1,user1@gmail.com,,password",
+        ",user1,user1@gmail.com,password123,FullName",
+        "user1,,user1@gmail.com,password123,Username",
+        "user1,user1,,password123,Email",
+        "user1,user1,user1@gmail.com,,Password",
     })
     void shouldNotRegisterWithoutRequiredFields(
             String fullName, String username, String email, String password, String errorFieldName) {
 
-        restTestClient
+        record ReqBody(String fullName, String username, String email, String password) {}
+        ExchangeResult exchangeResult = restTestClient
                 .post()
                 .uri("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                          "fullName":%s,
-                          "username":%s,
-                          "email":%s,
-                          "password":%s
-                        }
-                """.formatted(fullName, username, email, password))
+                .body(new ReqBody(fullName, username, email, password))
                 .exchange()
                 .expectStatus()
-                .isEqualTo(HttpStatus.BAD_REQUEST);
-        // TODO; assert error field
+                .isEqualTo(HttpStatus.BAD_REQUEST)
+                .returnResult();
+
+        String responseJson = new String(exchangeResult.getResponseBodyContent());
+        assertThat(responseJson).contains("%s is required".formatted(errorFieldName));
     }
 
     @Test

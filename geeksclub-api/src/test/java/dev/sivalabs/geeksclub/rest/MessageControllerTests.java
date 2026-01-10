@@ -553,7 +553,7 @@ class MessageControllerTests extends BaseIntegrationTest {
                         """)
                 .exchange()
                 .expectStatus()
-                .is5xxServerError(); // The implementation throws an exception for this case
+                .isBadRequest();
     }
 
     @Test
