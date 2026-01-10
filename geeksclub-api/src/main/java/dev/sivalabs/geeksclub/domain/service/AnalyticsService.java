@@ -87,18 +87,18 @@ public class AnalyticsService {
         Map<LocalDate, Long> activeUserCountMap = new HashMap<>();
 
         messageStats.forEach(stat -> {
-            LocalDate date = stat.getDate().toLocalDate();
+            LocalDate date = stat.getDate();
             messageCountMap.put(date, stat.getMessageCount());
             spamCountMap.put(date, stat.getSpamCount());
         });
 
         voteStats.forEach(stat -> {
-            LocalDate date = stat.getDate().toLocalDate();
+            LocalDate date = stat.getDate();
             voteCountMap.put(date, stat.getVoteCount());
         });
 
         activeUserStats.forEach(stat -> {
-            LocalDate date = stat.getDate().toLocalDate();
+            LocalDate date = stat.getDate();
             activeUserCountMap.put(date, stat.getActiveUserCount());
         });
 
@@ -177,7 +177,7 @@ public class AnalyticsService {
 
         List<SpamStatByDateVM> byDate = spamStatsByDate.stream()
                 .map(stat -> new SpamStatByDateVM(
-                        stat.getDate().toLocalDate(), stat.getTotalMessages(), stat.getSpamCount(), stat.getSpamRate()))
+                        stat.getDate(), stat.getTotalMessages(), stat.getSpamCount(), stat.getSpamRate()))
                 .toList();
 
         // Get flagged messages

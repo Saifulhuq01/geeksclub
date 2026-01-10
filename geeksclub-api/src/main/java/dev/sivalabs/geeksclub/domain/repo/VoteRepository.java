@@ -2,6 +2,7 @@ package dev.sivalabs.geeksclub.domain.repo;
 
 import dev.sivalabs.geeksclub.domain.entity.VoteEntity;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -53,7 +54,7 @@ public interface VoteRepository extends JpaRepository<VoteEntity, Long> {
     }
 
     interface DailyVoteStats {
-        java.sql.Date getDate();
+        LocalDate getDate();
 
         long getVoteCount();
     }

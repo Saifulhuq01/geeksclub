@@ -7,18 +7,29 @@
 
   <!-- Loading State -->
   @if (isLoading()) {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      @for (item of [1, 2, 3, 4]; track item) {
-        <div class="bg-white rounded-lg shadow-md p-6 animate-pulse">
-          <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-          <div class="h-8 bg-gray-200 rounded w-3/4"></div>
-        </div>
-      }
+    <div class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        @for (item of [1, 2, 3, 4]; track item) {
+          <div class="bg-white rounded-lg shadow-md p-6 animate-pulse">
+            <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div class="h-8 bg-gray-200 rounded w-3/4"></div>
+          </div>
+        }
+      </div>
     </div>
   }
 
-  <!-- Statistics Cards -->
-  @if (!isLoading()) {
+  <!-- Error State -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6" role="alert">
+      <p class="font-medium">Error</p>
+      <p class="text-sm">{{ error() }}</p>
+    </div>
+  }
+
+  <!-- Analytics Content -->
+  @if (!isLoading() && !error() && overview()) {
+    <!-- Overview Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <!-- Total Users -->
       <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
@@ -31,10 +42,10 @@
             </div>
           </div>
           <h3 class="text-gray-600 text-sm font-medium mb-1">Total Users</h3>
-          <p class="text-3xl font-bold text-gray-900">{{ stats().totalUsers.toLocaleString() }}</p>
+          <p class="text-3xl font-bold text-gray-900">{{ overview()!.totalUsers.toLocaleString() }}</p>
         </div>
         <div class="bg-blue-50 px-6 py-3">
-          <p class="text-sm text-blue-600 font-medium">All registered users</p>
+          <p class="text-sm text-blue-600 font-medium">{{ overview()!.activeUsersLast7Days.toLocaleString() }} active (7d)</p>
         </div>
       </div>
 
@@ -49,10 +60,10 @@
             </div>
           </div>
           <h3 class="text-gray-600 text-sm font-medium mb-1">Total Messages</h3>
-          <p class="text-3xl font-bold text-gray-900">{{ stats().totalMessages.toLocaleString() }}</p>
+          <p class="text-3xl font-bold text-gray-900">{{ overview()!.totalMessages.toLocaleString() }}</p>
         </div>
         <div class="bg-green-50 px-6 py-3">
-          <p class="text-sm text-green-600 font-medium">All published messages</p>
+          <p class="text-sm text-green-600 font-medium">{{ overview()!.messagesLast24Hours.toLocaleString() }} in last 24h</p>
         </div>
       </div>
 
@@ -67,31 +78,182 @@
             </div>
           </div>
           <h3 class="text-gray-600 text-sm font-medium mb-1">Total Votes</h3>
-          <p class="text-3xl font-bold text-gray-900">{{ stats().totalVotes.toLocaleString() }}</p>
+          <p class="text-3xl font-bold text-gray-900">{{ overview()!.totalVotes.toLocaleString() }}</p>
         </div>
         <div class="bg-purple-50 px-6 py-3">
-          <p class="text-sm text-purple-600 font-medium">All votes cast</p>
+          <p class="text-sm text-purple-600 font-medium">{{ overview()!.votesLast24Hours.toLocaleString() }} in last 24h</p>
         </div>
       </div>
 
-      <!-- Active Users -->
+      <!-- Spam Detection -->
       <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
         <div class="p-6">
           <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
           </div>
-          <h3 class="text-gray-600 text-sm font-medium mb-1">Active Users</h3>
-          <p class="text-3xl font-bold text-gray-900">{{ stats().activeUsers.toLocaleString() }}</p>
+          <h3 class="text-gray-600 text-sm font-medium mb-1">Spam Detected</h3>
+          <p class="text-3xl font-bold text-gray-900">{{ overview()!.spamDetected.toLocaleString() }}</p>
         </div>
-        <div class="bg-orange-50 px-6 py-3">
-          <p class="text-sm text-orange-600 font-medium">Last 7 days</p>
+        <div class="bg-red-50 px-6 py-3">
+          <p class="text-sm text-red-600 font-medium">{{ getPercentage(overview()!.spamRate) }} spam rate</p>
         </div>
       </div>
     </div>
+
+    <!-- Today's Activity -->
+    @if (todayStats()) {
+      <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Today's Activity</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="text-center p-4 bg-blue-50 rounded-lg">
+            <p class="text-2xl font-bold text-blue-600">{{ todayStats()!.messageCount.toLocaleString() }}</p>
+            <p class="text-sm text-gray-600 mt-1">Messages Posted</p>
+          </div>
+          <div class="text-center p-4 bg-green-50 rounded-lg">
+            <p class="text-2xl font-bold text-green-600">{{ todayStats()!.activeUsers.toLocaleString() }}</p>
+            <p class="text-sm text-gray-600 mt-1">Active Users</p>
+          </div>
+          <div class="text-center p-4 bg-purple-50 rounded-lg">
+            <p class="text-2xl font-bold text-purple-600">{{ todayStats()!.totalVotes.toLocaleString() }}</p>
+            <p class="text-sm text-gray-600 mt-1">Votes Cast</p>
+          </div>
+          <div class="text-center p-4 bg-red-50 rounded-lg">
+            <p class="text-2xl font-bold text-red-600">{{ todayStats()!.spamCount.toLocaleString() }}</p>
+            <p class="text-sm text-gray-600 mt-1">Spam Flagged</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Two Column Layout for Active Users and Trending Messages -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <!-- Active Users -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Most Active Users</h3>
+        @if (activeUsers().length === 0) {
+          <p class="text-gray-500 text-center py-8">No active users found</p>
+        } @else {
+          <div class="space-y-3">
+            @for (user of activeUsers(); track user.userId) {
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center gap-3">
+                  <a
+                    [routerLink]="['/user', user.username]"
+                    class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold hover:bg-blue-700 transition-colors flex-shrink-0"
+                  >
+                    {{ user.username.charAt(0).toUpperCase() }}
+                  </a>
+                  <div class="min-w-0">
+                    <a
+                      [routerLink]="['/user', user.username]"
+                      class="font-semibold text-gray-900 hover:text-blue-600 transition-colors block truncate"
+                    >
+                      {{ user.fullName }}
+                    </a>
+                    <p class="text-xs text-gray-500 truncate">&#64;{{ user.username }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4 text-sm flex-shrink-0">
+                  <div class="text-center">
+                    <p class="font-bold text-gray-900">{{ user.messageCount }}</p>
+                    <p class="text-xs text-gray-500">posts</p>
+                  </div>
+                  <div class="text-center">
+                    <p class="font-bold text-gray-900">{{ user.voteCount }}</p>
+                    <p class="text-xs text-gray-500">votes</p>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Trending Messages -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Trending Messages (7 days)</h3>
+        @if (trendingMessages().length === 0) {
+          <p class="text-gray-500 text-center py-8">No trending messages found</p>
+        } @else {
+          <div class="space-y-3">
+            @for (message of trendingMessages(); track message.id) {
+              <div class="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-start gap-2 mb-2">
+                  <a
+                    [routerLink]="['/user', message.author.username]"
+                    class="font-semibold text-sm text-gray-900 hover:text-blue-600 transition-colors"
+                  >
+                    &#64;{{ message.author.username }}
+                  </a>
+                  <span class="text-xs text-gray-500">{{ formatDate(message.createdAt) }}</span>
+                </div>
+                <p class="text-sm text-gray-700 mb-2">{{ truncateContent(message.content, 100) }}</p>
+                <div class="flex items-center gap-4 text-xs">
+                  <span class="text-green-600 font-medium">↑ {{ message.upvoteCount }}</span>
+                  <span class="text-red-600 font-medium">↓ {{ message.downvoteCount }}</span>
+                  <span class="text-gray-600">Score: {{ message.score }}</span>
+                  <span class="text-blue-600 font-medium">+{{ message.recentVotes }} recent</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Spam Statistics -->
+    @if (spamStats()) {
+      <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Spam Detection Overview</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div class="text-center p-4 bg-red-50 rounded-lg border border-red-200">
+            <p class="text-3xl font-bold text-red-600">{{ spamStats()!.spamDetected.toLocaleString() }}</p>
+            <p class="text-sm text-gray-600 mt-1">Total Spam</p>
+          </div>
+          <div class="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <p class="text-3xl font-bold text-yellow-600">{{ getPercentage(spamStats()!.spamRate) }}</p>
+            <p class="text-sm text-gray-600 mt-1">Spam Rate</p>
+          </div>
+          <div class="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <p class="text-3xl font-bold text-purple-600">{{ getPercentage(spamStats()!.averageConfidence) }}</p>
+            <p class="text-sm text-gray-600 mt-1">Avg Confidence</p>
+          </div>
+          <div class="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <p class="text-3xl font-bold text-blue-600">{{ spamStats()!.flaggedMessages.length.toLocaleString() }}</p>
+            <p class="text-sm text-gray-600 mt-1">Flagged Messages</p>
+          </div>
+        </div>
+
+        <!-- Recent Flagged Messages -->
+        @if (spamStats()!.flaggedMessages.length > 0) {
+          <div class="mt-6">
+            <h4 class="font-semibold text-gray-900 mb-3">Recent Flagged Messages</h4>
+            <div class="space-y-2">
+              @for (msg of spamStats()!.flaggedMessages.slice(0, 5); track msg.id) {
+                <div class="flex items-start justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-700 truncate">{{ truncateContent(msg.content, 80) }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ formatDateTime(msg.createdAt) }}</p>
+                  </div>
+                  <div class="flex items-center gap-2 flex-shrink-0 ml-4">
+                    <span class="px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded">
+                      {{ getPercentage(msg.spamConfidence) }}
+                    </span>
+                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">
+                      {{ msg.status }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
 
     <!-- Quick Actions -->
     <div class="bg-white rounded-lg shadow-md p-6">

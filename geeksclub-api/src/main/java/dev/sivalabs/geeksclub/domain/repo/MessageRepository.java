@@ -2,6 +2,7 @@ package dev.sivalabs.geeksclub.domain.repo;
 
 import dev.sivalabs.geeksclub.domain.entity.MessageEntity;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -108,7 +109,7 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
     List<MessageEntity> getFlaggedMessages(@Param("limit") int limit);
 
     interface DailyMessageStats {
-        java.sql.Date getDate();
+        LocalDate getDate();
 
         long getMessageCount();
 
@@ -170,7 +171,7 @@ public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
     }
 
     interface SpamStatsByDate {
-        java.sql.Date getDate();
+        LocalDate getDate();
 
         Long getTotalMessages();
 
