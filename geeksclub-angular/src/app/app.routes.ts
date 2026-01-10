@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -27,4 +28,19 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./admin/dashboard-layout/dashboard-layout.component').then(m => m.DashboardLayoutComponent),
+    canActivate: [adminGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./admin/pages/home/admin-home.component').then(m => m.AdminHomeComponent)
+      },
+      {
+        path: 'messages',
+        loadComponent: () => import('./admin/pages/messages/admin-messages.component').then(m => m.AdminMessagesComponent)
+      }
+    ]
+  }
 ];
