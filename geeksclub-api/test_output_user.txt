@@ -1,0 +1,103 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< dev.sivalabs:geeksclub-api >---------------------
+[INFO] Building geeksclub-api 1.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- git-commit-id:9.0.2:revision (default) @ geeksclub-api ---
+[INFO] dotGitDirectory 'C:\Users\Admin\Desktop\sivalabsOpenS\geeksclub\.git'
+[INFO] Collected git.branch with value Spring-AI-Setup
+[INFO] Collected git.commit.id.abbrev with value b58d7e0
+[INFO] Collected git.commit.user.name with value saifulhuq01
+[INFO] Collected git.commit.message.full with value Fix code formatting and test failures
+[INFO] including property 'git.commit.user.name' in results
+[INFO] including property 'git.commit.id.abbrev' in results
+[INFO] including property 'git.branch' in results
+[INFO] including property 'git.commit.message.full' in results
+[INFO] Reading existing properties file [C:\Users\Admin\Desktop\sivalabsOpenS\geeksclub\geeksclub-api\target\classes\git.properties] (for project geeksclub-api)...
+[INFO] Properties file [C:\Users\Admin\Desktop\sivalabsOpenS\geeksclub\geeksclub-api\target\classes\git.properties] is up-to-date (for module geeksclub-api)...
+[INFO] 
+[INFO] --- properties:1.2.1:read-project-properties (default) @ geeksclub-api ---
+[INFO] Loading 12 properties from File: C:\Users\Admin\Desktop\sivalabsOpenS\geeksclub\geeksclub-api\sonar-project.properties
+[INFO] 
+[INFO] --- jacoco:0.8.14:prepare-agent (pre-unit-tests) @ geeksclub-api ---
+[INFO] argLine set to -javaagent:C:\\Users\\Admin\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.14\\org.jacoco.agent-0.8.14-runtime.jar=destfile=C:\\Users\\Admin\\Desktop\\sivalabsOpenS\\geeksclub\\geeksclub-api\\target\\jacoco\\test\\test.exec
+[INFO] 
+[INFO] --- spring-boot:4.0.1:build-info (default) @ geeksclub-api ---
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ geeksclub-api ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 8 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ geeksclub-api ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- spotless:3.1.0:check (default) @ geeksclub-api ---
+[INFO] Spotless.Java is keeping 107 files clean - 1 needs changes to be clean, 0 were already clean, 106 were skipped because caching determined they were already clean
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  7.807 s
+[INFO] Finished at: 2026-01-10T21:43:12-08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal com.diffplug.spotless:spotless-maven-plugin:3.1.0:check (default) on project geeksclub-api: The following files had format violations:
+[ERROR]     src\test\java\dev\sivalabs\geeksclub\rest\UserControllerTests.java
+[ERROR]         @@ -16,15 +16,15 @@
+[ERROR]          @Sql("/test-data.sql")
+[ERROR]          class·UserControllerTests·extends·BaseIntegrationTest·{
+[ERROR]          
+[ERROR]         -··private·static·final·String·TEST_PASSWORD·=·"TestP@ssw0rd1";
+[ERROR]         +····private·static·final·String·TEST_PASSWORD·=·"TestP@ssw0rd1";
+[ERROR]          
+[ERROR]         -··@Test
+[ERROR]         -··void·shouldRegisterUserSuccessfully()·{
+[ERROR]         -····RegisterUserResponse·response·=·restTestClient
+[ERROR]         -········.post()
+[ERROR]         -········.uri("/api/users")
+[ERROR]         -········.contentType(MediaType.APPLICATION_JSON)
+[ERROR]         -········.body("""
+[ERROR]         +····@Test
+[ERROR]         +····void·shouldRegisterUserSuccessfully()·{
+[ERROR]         +········RegisterUserResponse·response·=·restTestClient
+[ERROR]         +················.post()
+[ERROR]         +················.uri("/api/users")
+[ERROR]         +················.contentType(MediaType.APPLICATION_JSON)
+[ERROR]         +················.body("""
+[ERROR]          ············{
+[ERROR]          ··············"fullName":"User123",
+[ERROR]          ··············"username":"user123",
+[ERROR]         @@ -32,117 +32,116 @@
+[ERROR]          ··············"password":"%s"
+[ERROR]          ············}
+[ERROR]          ············""".formatted(TEST_PASSWORD))
+[ERROR]         -········.exchange()
+[ERROR]         -········.expectStatus()
+[ERROR]         -········.isCreated()
+[ERROR]         -········.returnResult(RegisterUserResponse.class)
+[ERROR]         -········.getResponseBody();
+[ERROR]         +················.exchange()
+[ERROR]         +················.expectStatus()
+[ERROR]         +················.isCreated()
+[ERROR]         +················.returnResult(RegisterUserResponse.class)
+[ERROR]         +················.getResponseBody();
+[ERROR]          
+[ERROR]         -····assertThat(response).isNotNull();
+[ERROR]         -····assertThat(response.fullName()).isEqualTo("User123");
+[ERROR]         -····assertThat(response.username()).isEqualTo("user123");
+[ERROR]         -····assertThat(response.email()).isEqualTo("user123@gmail.com");
+[ERROR]         -····assertThat(response.role().name()).isEqualTo("USER");
+[ERROR]         -··}
+[ERROR]         +········assertThat(response).isNotNull();
+[ERROR]         +········assertThat(response.fullName()).isEqualTo("User123");
+[ERROR]         +········assertThat(response.username()).isEqualTo("user123");
+[ERROR]         +········assertThat(response.email()).isEqualTo("user123@gmail.com");
+[ERROR]     ... (459 more lines that didn't fit)
+[ERROR] Run 'mvn spotless:apply' to fix these violations.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
