@@ -12,9 +12,9 @@ public record MessageDetailVM(
         MessageStatus status,
         boolean isSpam,
         BigDecimal spamConfidence,
-        int upvoteCount,
-        int downvoteCount,
-        int score,
+        long upvoteCount,
+        long downvoteCount,
+        long score,
         String userVote,
         Instant createdAt,
         Instant updatedAt) {}

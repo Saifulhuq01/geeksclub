@@ -1,7 +1,9 @@
 package dev.sivalabs.geeksclub.domain.repo;
 
+import dev.sivalabs.geeksclub.domain.dto.VoteCounts;
 import dev.sivalabs.geeksclub.domain.entity.VoteEntity;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,6 +46,16 @@ public interface VoteRepository extends JpaRepository<VoteEntity, Long> {
             """, nativeQuery = true)
     List<DailyVoteStats> getDailyVoteStats(@Param("startDate") Instant startDate);
 
+    @Query("""
+    SELECT new dev.sivalabs.geeksclub.domain.dto.VoteCounts(
+        SUM(CASE WHEN v.voteType = 'UP' THEN 1 ELSE 0 END),
+        SUM(CASE WHEN v.voteType = 'DOWN' THEN 1 ELSE 0 END)
+    )
+    FROM VoteEntity v
+    WHERE v.messageId = :messageId
+    """)
+    Optional<VoteCounts> getVoteCounts(@Param("messageId") Long messageId);
+
     interface VoteCount {
         Long getMessageId();
 
@@ -53,7 +65,7 @@ public interface VoteRepository extends JpaRepository<VoteEntity, Long> {
     }
 
     interface DailyVoteStats {
-        java.sql.Date getDate();
+        LocalDate getDate();
 
         long getVoteCount();
     }

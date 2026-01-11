@@ -70,7 +70,7 @@ public class AnalyticsService {
 
     public DailyStatisticsVM getDailyStatistics(int days) {
         LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(days - 1);
+        LocalDate startDate = endDate.minusDays(days - 1L);
 
         Instant startInstant = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
 
@@ -87,18 +87,18 @@ public class AnalyticsService {
         Map<LocalDate, Long> activeUserCountMap = new HashMap<>();
 
         messageStats.forEach(stat -> {
-            LocalDate date = stat.getDate().toLocalDate();
+            LocalDate date = stat.getDate();
             messageCountMap.put(date, stat.getMessageCount());
             spamCountMap.put(date, stat.getSpamCount());
         });
 
         voteStats.forEach(stat -> {
-            LocalDate date = stat.getDate().toLocalDate();
+            LocalDate date = stat.getDate();
             voteCountMap.put(date, stat.getVoteCount());
         });
 
         activeUserStats.forEach(stat -> {
-            LocalDate date = stat.getDate().toLocalDate();
+            LocalDate date = stat.getDate();
             activeUserCountMap.put(date, stat.getActiveUserCount());
         });
 
@@ -170,14 +170,14 @@ public class AnalyticsService {
 
         // Get spam statistics by date
         LocalDate today = LocalDate.now();
-        LocalDate startDate = today.minusDays(days - 1);
+        LocalDate startDate = today.minusDays(days - 1L);
         Instant startInstant = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
 
         List<MessageRepository.SpamStatsByDate> spamStatsByDate = messageRepository.getSpamStatsByDate(startInstant);
 
         List<SpamStatByDateVM> byDate = spamStatsByDate.stream()
                 .map(stat -> new SpamStatByDateVM(
-                        stat.getDate().toLocalDate(), stat.getTotalMessages(), stat.getSpamCount(), stat.getSpamRate()))
+                        stat.getDate(), stat.getTotalMessages(), stat.getSpamCount(), stat.getSpamRate()))
                 .toList();
 
         // Get flagged messages

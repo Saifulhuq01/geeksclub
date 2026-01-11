@@ -1,5 +1,6 @@
 package dev.sivalabs.geeksclub.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.sivalabs.geeksclub.domain.dto.MessageStatus;
 import dev.sivalabs.geeksclub.domain.utils.AssertUtil;
 import jakarta.persistence.*;
@@ -8,6 +9,7 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "messages")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MessageEntity extends BaseEntity {
 
     @Column(name = "user_id", nullable = false)

@@ -16,7 +16,7 @@ export const adminGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  if (user.role !== 'ROLE_ADMIN') {
+  if (user.role !== 'ADMIN') {
     // User is not admin, redirect to home
     router.navigate(['/']);
     return false;

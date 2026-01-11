@@ -41,6 +41,8 @@ public class TokenProvider {
                 .expiresAt(expiresAt)
                 .subject(user.email())
                 .claim("user_id", user.id())
+                .claim("username", user.username())
+                .claim("full_name", user.fullName())
                 .claim("roles", user.role().name())
                 .build();
         return this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();

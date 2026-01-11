@@ -22,7 +22,8 @@ class UserEntityMapper {
                 userEntity.getUsername(),
                 userEntity.getEmail(),
                 includePassword ? userEntity.getPassword() : null,
-                userEntity.getRole());
+                userEntity.getRole(),
+                userEntity.getCreatedAt());
     }
 
     public UserEntity toEntity(UserVM user) {

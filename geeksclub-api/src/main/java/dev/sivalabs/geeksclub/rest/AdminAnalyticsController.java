@@ -13,6 +13,8 @@ import dev.sivalabs.geeksclub.rest.dto.SystemOverviewResponse;
 import dev.sivalabs.geeksclub.rest.dto.TrendingMessagesResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -74,7 +76,8 @@ class AdminAnalyticsController {
     @GetMapping("/users/active")
     @SecurityRequirement(name = "Bearer")
     @PreAuthorize("hasAuthority('ADMIN')")
-    ResponseEntity<MostActiveUsersResponse> getMostActiveUsers(@RequestParam(defaultValue = "20") int limit) {
+    ResponseEntity<MostActiveUsersResponse> getMostActiveUsers(
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit) {
         MostActiveUsersVM activeUsers = analyticsService.getMostActiveUsers(limit);
 
         var users = activeUsers.users().stream()
@@ -99,7 +102,8 @@ class AdminAnalyticsController {
     @SecurityRequirement(name = "Bearer")
     @PreAuthorize("hasAuthority('ADMIN')")
     ResponseEntity<TrendingMessagesResponse> getTrendingMessages(
-            @RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "7") int days) {
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit,
+            @RequestParam(defaultValue = "7") @Min(1) @Max(30) int days) {
         TrendingMessagesVM trending = analyticsService.getTrendingMessages(limit, days);
 
         var messages = trending.messages().stream()
@@ -129,7 +133,8 @@ class AdminAnalyticsController {
     @SecurityRequirement(name = "Bearer")
     @PreAuthorize("hasAuthority('ADMIN')")
     ResponseEntity<SpamStatisticsResponse> getSpamStatistics(
-            @RequestParam(defaultValue = "30") int days, @RequestParam(defaultValue = "10") int flaggedLimit) {
+            @RequestParam(defaultValue = "30") @Min(1) @Max(365) int days,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int flaggedLimit) {
         SpamStatisticsVM stats = analyticsService.getSpamStatistics(days, flaggedLimit);
 
         var byDate = stats.byDate().stream()

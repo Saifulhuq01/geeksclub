@@ -7,9 +7,13 @@ export interface UserProfile {
   id: number;
   fullName: string;
   username: string;
-  email: string;
+  email?: string;
   role: string;
   createdAt: string;
+  stats?: {
+    messageCount: number;
+    voteCount: number;
+  };
 }
 
 export interface UpdateUserRequest {

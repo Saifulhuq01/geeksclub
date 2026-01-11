@@ -1,11 +1,13 @@
 package dev.sivalabs.geeksclub.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.sivalabs.geeksclub.domain.dto.VoteType;
 import dev.sivalabs.geeksclub.domain.utils.AssertUtil;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "votes")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VoteEntity extends BaseEntity {
 
     @Column(name = "user_id", nullable = false)

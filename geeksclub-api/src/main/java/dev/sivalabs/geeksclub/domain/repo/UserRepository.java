@@ -2,6 +2,7 @@ package dev.sivalabs.geeksclub.domain.repo;
 
 import dev.sivalabs.geeksclub.domain.entity.UserEntity;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,7 +34,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     List<DailyActiveUserStats> getDailyActiveUserStats(@Param("startDate") Instant startDate);
 
     interface DailyActiveUserStats {
-        java.sql.Date getDate();
+        LocalDate getDate();
 
         long getActiveUserCount();
     }

@@ -2,32 +2,30 @@ package dev.sivalabs.geeksclub.rest;
 
 import dev.sivalabs.geeksclub.domain.dto.AuthenticatedUser;
 import dev.sivalabs.geeksclub.domain.dto.Role;
-import dev.sivalabs.geeksclub.domain.service.UserService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserContextUtils {
-    private final UserService userService;
-
-    public UserContextUtils(UserService userService) {
-        this.userService = userService;
-    }
 
     public AuthenticatedUser getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null
                 && !(authentication instanceof AnonymousAuthenticationToken)
-                && authentication.isAuthenticated()) {
-            String email = authentication.getName();
-            return userService
-                    .findByEmail(email)
-                    .map(userVM -> new AuthenticatedUser(
-                            userVM.id(), userVM.email(), userVM.fullName(), userVM.username(), userVM.role()))
-                    .orElse(null);
+                && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof Jwt jwt) {
+            Long userId = jwt.getClaim("user_id");
+            String email = jwt.getSubject();
+            String username = jwt.getClaim("username");
+            String fullName = jwt.getClaim("full_name");
+            String roleStr = jwt.getClaim("roles");
+            Role role = Role.valueOf(roleStr);
+
+            return new AuthenticatedUser(userId, email, fullName, username, role);
         }
         return null;
     }

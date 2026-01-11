@@ -181,7 +181,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   "fullName": "John Doe",
   "username": "johndoe",
   "email": "john.doe@example.com",
-  "role": "USER"
+  "role": "USER",
+  "createdAt": "2025-01-05T10:30:00Z"
 }
 ```
 
@@ -215,7 +216,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   "fullName": "John Doe Updated",
   "username": "johndoe_updated",
   "email": "john.doe@example.com",
-  "role": "USER"
+  "role": "USER",
+  "createdAt": "2025-01-05T10:30:00Z"
 }
 ```
 

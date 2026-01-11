@@ -1,11 +1,13 @@
 package dev.sivalabs.geeksclub.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import dev.sivalabs.geeksclub.domain.dto.Role;
 import dev.sivalabs.geeksclub.domain.utils.AssertUtil;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserEntity extends BaseEntity {
 
     @Column(name = "full_name", nullable = false)
