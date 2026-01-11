@@ -23,13 +23,13 @@ class UserControllerTests extends BaseIntegrationTest {
                 .uri("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
-                        {
-                          "fullName":"User123",
-                          "username":"user123",
-                          "email":"user123@gmail.com",
-                          "password":"Secret@121212"
-                        }
-                        """)
+                                                {
+                                                  "fullName":"User123",
+                                                  "username":"user123",
+                                                  "email":"user123@gmail.com",
+                                                  "password":"TestP@ssw0rd1"
+                                                }
+                                                """)
                 .exchange()
                 .expectStatus()
                 .isCreated()
@@ -111,10 +111,10 @@ class UserControllerTests extends BaseIntegrationTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
-                        {
-                          "fullName": "Siva Updated"
-                        }
-                        """)
+                                                {
+                                                  "fullName": "Siva Updated"
+                                                }
+                                                """)
                 .exchange()
                 .expectStatus()
                 .isOk();
@@ -140,13 +140,13 @@ class UserControllerTests extends BaseIntegrationTest {
                 .uri("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
-                        {
-                          "fullName":"New User",
-                          "username":"newuser",
-                          "email":"siva@gmail.com",
-                          "password":"Secret@121212"
-                        }
-                        """)
+                                                {
+                                                  "fullName":"New User",
+                                                  "username":"newuser",
+                                                  "email":"siva@gmail.com",
+                                                  "password":"TestP@ssw0rd1"
+                                                }
+                                                """)
                 .exchange()
                 .expectStatus()
                 .is5xxServerError();
@@ -160,13 +160,13 @@ class UserControllerTests extends BaseIntegrationTest {
                 .uri("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
-                        {
-                          "fullName":"New User",
-                          "username":"siva",
-                          "email":"newuser@gmail.com",
-                          "password":"Secret@121212"
-                        }
-                        """)
+                                                {
+                                                  "fullName":"New User",
+                                                  "username":"siva",
+                                                  "email":"newuser@gmail.com",
+                                                  "password":"TestP@ssw0rd1"
+                                                }
+                                                """)
                 .exchange()
                 .expectStatus()
                 .is5xxServerError();
@@ -179,13 +179,13 @@ class UserControllerTests extends BaseIntegrationTest {
                 .uri("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
-                        {
-                          "fullName":"New User",
-                          "username":"newuser",
-                          "email":"invalid-email",
-                          "password":"Secret@121212"
-                        }
-                        """)
+                                                {
+                                                  "fullName":"New User",
+                                                  "username":"newuser",
+                                                  "email":"invalid-email",
+                                                  "password":"TestP@ssw0rd1"
+                                                }
+                                                """)
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.BAD_REQUEST);
@@ -198,13 +198,13 @@ class UserControllerTests extends BaseIntegrationTest {
                 .uri("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
-                        {
-                          "fullName":"New User",
-                          "username":"newuser",
-                          "email":"newuser@gmail.com",
-                          "password":"weak"
-                        }
-                        """)
+                                                {
+                                                  "fullName":"New User",
+                                                  "username":"newuser",
+                                                  "email":"newuser@gmail.com",
+                                                  "password":"weak"
+                                                }
+                                                """)
                 .exchange()
                 .expectStatus()
                 .isBadRequest();
@@ -259,10 +259,10 @@ class UserControllerTests extends BaseIntegrationTest {
                 .uri("/api/users/me")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
-                        {
-                          "fullName": "Updated Name"
-                        }
-                        """)
+                                                {
+                                                  "fullName": "Updated Name"
+                                                }
+                                                """)
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -278,10 +278,10 @@ class UserControllerTests extends BaseIntegrationTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
-                        {
-                          "fullName": ""
-                        }
-                        """)
+                                                {
+                                                  "fullName": ""
+                                                }
+                                                """)
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.BAD_REQUEST);
@@ -297,10 +297,10 @@ class UserControllerTests extends BaseIntegrationTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
-                        {
-                          "fullName": null
-                        }
-                        """)
+                                                {
+                                                  "fullName": null
+                                                }
+                                                """)
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.BAD_REQUEST);

@@ -19,6 +19,11 @@ import tools.jackson.databind.json.JsonMapper;
 @AutoConfigureRestTestClient
 @AutoConfigureMockMvc
 public abstract class BaseIntegrationTest {
+
+    static {
+        TestKeyGenerator.generateKeys();
+    }
+
     public static final String ADMIN_EMAIL = "admin@gmail.com";
     public static final String ADMIN_PASSWORD = "Admin@1234";
     public static final String USER_EMAIL = "siva@gmail.com";
